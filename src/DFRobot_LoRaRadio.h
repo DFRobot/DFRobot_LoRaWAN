@@ -7,7 +7,7 @@
  *@version V0.0.1
  *@date 2025-3-14
  *@get from https://www.dfrobot.com
- *@url https://gitee.com/dfrobotcd/lorawan-esp32-sdk
+ *@url https://github.com/DFRobot/DFRobot_LoRaWAN
 */
 #ifndef __DFROBOT_LORARADIO_H_
 #define __DFROBOT_LORARADIO_H_
@@ -16,73 +16,73 @@
 #include "radio/radio.h"
 #include <string.h>
 #include "radio/sx126x/sx126x.h"
+#include "boards/mcu/timer.h"
 
 #define LCD_OnBoard LoRaWAN::DFRobot_ST7735_80x160_HW_SPI ///< The type of screen on the development board
 #define SPI_MUTEX LoRaWAN::spimutex
 
-/**
- * @fn onTxDone
- * @brief Callback function for when data transmission is completed.
- */
-typedef void onTxDone(void);
 
 /**
- * @fn onRxDone
+ * @enum eBandwidths_t
+ * @brief LoRa communication uses specific bandwidths.
+ * @details When the bandwidth is larger, the data transmission rate increases, 
+ *          while a smaller bandwidth provides stronger anti-interference capabilities 
+ *          and enables longer transmission distances.
+ */
+typedef enum
+{
+      BW_125 = 0,   /**<125k HZ>*/
+      BW_250,       /**<250k HZ>*/
+      BW_500,       /**<500k HZ>*/
+      BW_062,       /**<62k HZ>*/
+      BW_041,       /**<41k HZ>*/
+      BW_031,       /**<31k HZ>*/
+      BW_020,       /**<20k HZ>*/
+      BW_015,       /**<15k HZ>*/
+      BW_010,       /**<10k HZ>*/
+      BW_007 = 9,   /**<7k HZ>*/
+} eBandwidths_t;
+
+/**
+ * @fn txCB
+ * @brief Callback function for when data transmission is completed.
+ */
+typedef void txCB(void);
+
+/**
+ * @fn rxCB
  * @brief Callback function for when data reception is completed.
  * @param payload The received payload.
  * @param size The size of the received payload.
  * @param rssi The received signal strength indicator.
  * @param snr The signal-to-noise ratio.
  */
-typedef void onRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr);
+typedef void rxCB(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr);
 
 /**
- * @fn OnCadDone
+ * @fn cadDoneCB
  * @brief Callback function for when channel activity detection is completed.
  * @param cadResult Whether the channel is free or busy.
  */
-typedef void OnCadDone(bool cadResult);
+typedef void cadDoneCB(bool cadResult);
 
 /**
- * @fn onRxTimeout
+ * @fn rxTimeOutCB
  * @brief Callback function for when data reception times out.
  */
-typedef void onRxTimeout(void);
+typedef void rxTimeOutCB(void);
 
 /**
- * @fn onRxError
+ * @fn rxErrorCB
  * @brief Callback function for when data reception encounters an error.
  */
-typedef void onRxError(void);
+typedef void rxErrorCB(void);
 
 /**
  * @brief Class for interfacing with a LoRa radio module using the Semtech SX126x chip.
  */
 class DFRobot_LoRaRadio
 {
-
-public:
-
-  /**
-   * @enum eBandwidths_t
-   * @brief LoRa communication uses specific bandwidths.
-   * @details When the bandwidth is larger, the data transmission rate increases, 
-   *          while a smaller bandwidth provides stronger anti-interference capabilities 
-   *          and enables longer transmission distances.
-   */
-  typedef enum
-  {
-       BW_125 = 0,   /**<125k HZ>*/
-       BW_250,       /**<250k HZ>*/
-       BW_500,       /**<500k HZ>*/
-       BW_062,       /**<62k HZ>*/
-       BW_041,       /**<41k HZ>*/
-       BW_031,       /**<31k HZ>*/
-       BW_020,       /**<20k HZ>*/
-       BW_015,       /**<15k HZ>*/
-       BW_010,       /**<10k HZ>*/
-       BW_007 = 9,   /**<7k HZ>*/
-  } eBandwidths_t;
 
 public:
     /**
@@ -100,52 +100,44 @@ public:
     void init();
 
     /**
-     * @fn setTxEirp
+     * @fn setEIRP
      * @brief Sets the transmission power of the LoRa radio module.
-     * @param txeirp Equivalent Isotropically Radiated Power(dBm)
+     * @param EIRP Equivalent Isotropically Radiated Power(dBm)
      * @return None
      */
-    void setTxEirp(int8_t txeirp);
+    void setEIRP(int8_t EIRP);
 
     /**
-     * @fn setSpreadingFactor
+     * @fn setSF
      * @brief Set the spreading factor of the radio.
      * @param SF The spreading factor to set (unsigned 8-bit integer).
      * @return None
      */
-    void setSpreadingFactor(uint8_t SF);
+    void setSF(uint8_t SF);
 
     /**
-     * @fn setBandwidth
+     * @fn setBW
      * @brief Set the bandwidth of the radio.
-     * @param bandwidth The bandwidth to set (enumeration type eBandwidths_t).
+     * @param BW The bandwidth to set (enumeration type eBandwidths_t).
      * @return None
      */
-    void setBandwidth(eBandwidths_t bandwidth);
+    void setBW(eBandwidths_t BW);
 
     /**
-     * @fn setSync
-     * @brief Sets the synchronization word of the LoRa radio module.
-     * @param sync The synchronization word.
-     * @return None
-     */
-    void setSync(uint16_t sync);
-
-    /**
-     * @fn setFrequency
+     * @fn setFreq
      * @brief Sets the frequency of the LoRa radio module.
      * @param freq The frequency, in Hz.
      * @return None
      */
-    void setFrequency(uint32_t freq);
+    void setFreq(uint32_t freq);
 
     /**
-     * @fn setTxCallback
+     * @fn setTxCB
      * @brief Sets the callback function for when data transmission is completed.
      * @param cb The callback function.
      * @return None
      */
-    void setTxCallback(onTxDone cb);
+    void setTxCB(txCB cb);
 
     /**
      * @fn sendData
@@ -157,28 +149,28 @@ public:
     void sendData(const void *data, uint8_t size);
 
     /**
-     * @fn setRxCallBack
+     * @fn setRxCB
      * @brief Sets the callback function for when data reception is completed.
      * @param cb The callback function.
      * @return None
      */
-    void setRxCallBack(onRxDone cb);
+    void setRxCB(rxCB cb);
 
     /**
-     * @fn setRxTimeOutCallback
+     * @fn setRxTimeOutCB
      * @brief Sets the callback function for when data reception times out.
      * @param cb The callback
      * @return None
      */
-     void setRxTimeOutCallback(onRxTimeout cb);
+     void setRxTimeOutCB(rxTimeOutCB cb);
 
      /**
-      * @fn setRxErrorCallback
+      * @fn setRxErrorCB
       * @brief Sets the callback function for when data reception encounters an error.
       * @param cb The callback function.
       * @return None
       */
-     void setRxErrorCallback(onRxError cb);
+     void setRxErrorCB(rxErrorCB cb);
 
      /**
       * @fn startRx
@@ -189,28 +181,30 @@ public:
      void startRx(uint32_t timeout);
 
      /**
-      * @fn setCadCallback
+      * @fn setCadCB
       * @brief Sets the callback function for when channel activity detection is completed.
       * @param cb The callback function.
       * @return None
       */
-     void setCadCallback(OnCadDone cb);
+     void setCadCB(cadDoneCB cb);
 
      /**
       * @fn startCad
       * @brief Starts channel activity detection using the LoRa radio module.
-      * @param dataRate The data rate, in bits per second.
       * @param cadSymbolNum the number of symbols to be used for channel activity detection operation.
+      * @param cadDetPeak Peak detection threshold, Signals above this threshold are considered definite channel activity.
+      * @param cadDetMin Minimum detection threshold, Signals between cadDetMin and cadDetPeak trigger potential activity.
       * @return None
       */
-     void startCad(uint8_t dataRate, RadioLoRaCadSymbols_t cadSymbolNum);
+     void startCad(RadioLoRaCadSymbols_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin);
 
      /**
-      * @fn radioDeepSleep
-      * @brief Puts the LoRa radio module and MCU in deep sleep mode.
+      * @fn deepSleepMs
+      * @brief Set the MCU to immediately enter sleep for a specified duration.
+      * @param timesleep Node sleep duration(ms).If set to 0, the device will never wake up.
       * @return None
       */
-     void radioDeepSleep();
+     void deepSleepMs(uint32_t timesleep);
      
      /**
       * @fn setEncryptKey
@@ -227,6 +221,13 @@ public:
       * @return None
       */
      void dumpRegisters();
+
+     /**
+     * @fn setSync
+     * @brief This method is not available.
+     * @return None
+     */
+    void setSync(uint16_t sync);
 
      private:
      eBandwidths_t _bandwidth = BW_125; /**< The bandwidth of the LoRa radio module. */

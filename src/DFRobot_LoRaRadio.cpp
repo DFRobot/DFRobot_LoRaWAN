@@ -7,7 +7,7 @@
  *@version V0.0.1
  *@date 2025-3-14
  *@get from https://www.dfrobot.com
- *@url https://gitee.com/dfrobotcd/lorawan-esp32-sdk
+ *@url https://github.com/DFRobot/DFRobot_LoRaWAN
 */
 #include "DFRobot_LoRaRadio.h"
 #include "radio/radio.h"
@@ -21,7 +21,7 @@ static RadioEvents_t radioEvent;            // radio层驱动回调
 extern SemaphoreHandle_t loraIntSem;
 extern TaskHandle_t loraTaskHandle;
 
-static onRxDone *rxEncryptiondone = NULL;
+static rxCB *rxEncryptiondone = NULL;
 
 uint8_t  isEncryption = false;      // 是否加密传输
 uint8_t  dataKey[16];               // 数据密钥
@@ -96,22 +96,22 @@ void DFRobot_LoRaRadio::init()
     Radio2.Init(&radioEvent);
 }
 
-void DFRobot_LoRaRadio::setBandwidth(eBandwidths_t bandwidth)
+void DFRobot_LoRaRadio::setBW(eBandwidths_t BW)
 {
-    _bandwidth = bandwidth;
+    _bandwidth = BW;
     Radio2.SetTxConfig(MODEM_LORA, _txeirp, 0,(uint32_t)_bandwidth, _SF, 1, 8, false, true, 0, 0, false, 3000);
     Radio2.SetRxConfig(MODEM_LORA,(uint32_t)_bandwidth, _SF, 1, 0, 8, 0, false, 0, true, 0, 0, false, true);
     delay(10);
 }
 
-void DFRobot_LoRaRadio::setTxEirp(int8_t txeirp)
+void DFRobot_LoRaRadio::setEIRP(int8_t EIRP)
 {
-    _txeirp = txeirp;
+    _txeirp = EIRP;
     Radio2.SetTxConfig(MODEM_LORA, _txeirp, 0,(uint32_t)_bandwidth, _SF, 1, 8, false, true, 0, 0, false, 3000);
     delay(10);
 }
 
-void DFRobot_LoRaRadio::setSpreadingFactor(uint8_t SF)
+void DFRobot_LoRaRadio::setSF(uint8_t SF)
 {
     _SF = SF;
     Radio2.SetTxConfig(MODEM_LORA, _txeirp, 0,(uint32_t)_bandwidth, _SF, 1, 8, false, true, 0, 0, false, 3000);
@@ -121,14 +121,18 @@ void DFRobot_LoRaRadio::setSpreadingFactor(uint8_t SF)
 
 void DFRobot_LoRaRadio::setSync(uint16_t sync)
 {
-    uint8_t buffer[2];
-    buffer[0] = sync>>8;
-    buffer[1] = sync & 0xFF;
-    printf("SyncWord = %04X\n", sync);
-    SX126xWriteRegisters(REG_LR_SYNCWORD, buffer, 2);
+    // uint8_t buffer[2];
+    // buffer[0] = sync>>8;
+    // buffer[1] = sync & 0xFF;
+    // printf("set SyncWord = %04X\n", sync);
+    // SX126xWriteRegisters(REG_LR_SYNCWORD, buffer, 2);
+
+    // uint16_t readSyncWord = 0;
+    // SX126xReadRegisters(REG_LR_SYNCWORD, (uint8_t*)&readSyncWord, 2);
+    // printf("read SyncWord = %04X\n", readSyncWord);
 }
 
-void DFRobot_LoRaRadio::setFrequency(uint32_t freq)
+void DFRobot_LoRaRadio::setFreq(uint32_t freq)
 {
     //SX126xSetRfFrequency(freq);
     Radio2.SetChannel(freq);
@@ -149,14 +153,14 @@ void DFRobot_LoRaRadio::sendData(const void *data, uint8_t size)
     }
 }
 
-void DFRobot_LoRaRadio::setTxCallback(onTxDone cb)
+void DFRobot_LoRaRadio::setTxCB(txCB cb)
 {
    // txdone = cb;
     radioEvent.TxDone  = cb;
     reInitEvent(&radioEvent);
 }
 
-void DFRobot_LoRaRadio::setRxCallBack(onRxDone cb)
+void DFRobot_LoRaRadio::setRxCB(rxCB cb)
 {
     rxEncryptiondone = cb;
     radioEvent.RxDone  = loraRxCb;
@@ -168,35 +172,40 @@ void DFRobot_LoRaRadio::startRx(uint32_t timeout)
     Radio2.Rx(timeout);
 }
 
-void DFRobot_LoRaRadio::setCadCallback(OnCadDone cb)
+void DFRobot_LoRaRadio::setCadCB(cadDoneCB cb)
 {   
     radioEvent.CadDone  = cb;
     reInitEvent(&radioEvent);
 }
 
-void DFRobot_LoRaRadio::setRxErrorCallback(onRxError cb)
+void DFRobot_LoRaRadio::setRxErrorCB(rxErrorCB cb)
 {
     radioEvent.RxError  = cb;
     reInitEvent(&radioEvent);
 }
 
-void DFRobot_LoRaRadio::setRxTimeOutCallback(onRxTimeout cb)
+void DFRobot_LoRaRadio::setRxTimeOutCB(rxTimeOutCB cb)
 {
     radioEvent.RxTimeout  = cb;
     reInitEvent(&radioEvent);
 }
 
-void DFRobot_LoRaRadio::startCad(uint8_t dataRate, RadioLoRaCadSymbols_t cadSymbolNum)
+void DFRobot_LoRaRadio::startCad(RadioLoRaCadSymbols_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin)
 {
     // printf("startCad\n");
     //Radio2.Standby();
-    Radio2.SetCadParams(cadSymbolNum, dataRate + 13, 10, LORA_CAD_ONLY, 300000);
+    Radio2.SetCadParams(cadSymbolNum, cadDetPeak, cadDetMin, LORA_CAD_ONLY, 300000);
     //cadTime = millis();
     Radio2.StartCad();
 }
 
-void DFRobot_LoRaRadio::radioDeepSleep()
+void DFRobot_LoRaRadio::deepSleepMs(uint32_t timesleep)
 {
+    if(timesleep != 0){
+        // esp32进入指定睡眠时间，为0则不用定时器唤醒
+        esp_sleep_enable_timer_wakeup(timesleep * (uint64_t)1000);
+    }
+    printf("\n\n------[API deepSleepMs] ESP32 Enter DeepSleep!------\n\n");
     SX126xIOInit();     // 预防用户没有初始化
     Radio2.Standby();   // 容错
     Radio2.Sleep();

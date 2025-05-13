@@ -11,10 +11,7 @@
  *@author [Martin](Martin@dfrobot.com)
  *@version V0.0.1
  *@date 2025-2-24
- *@wiki en:https://wiki.dfrobot.com/lorawan
- *@wiki cn:https://wiki.dfrobot.com.cn/lorawan
- *@get from https://www.dfrobot.com
- *@url https://gitee.com/dfrobotcd/lorawan-esp32-sdk
+ *@url https://github.com/DFRobot/DFRobot_LoRaWAN
  */
 
 #include "DFRobot_LoRaWAN.h"
@@ -58,8 +55,8 @@ void joinCb(bool isOk, int16_t rssi, int8_t snr)
         }
         printf("\n");
 
-        node.TimerValue(&appTimer, APP_INTERVAL_MS);
-        node.TimerStart(&appTimer);
+        TimerSetValue(&appTimer, APP_INTERVAL_MS);
+        TimerStart(&appTimer);
     }else{
         printf("OTAA join error\n");
         printf("Check Whether the device has been registered on the gateway!\n");
@@ -76,8 +73,8 @@ void joinCb(bool isOk, int16_t rssi, int8_t snr)
 
 void userSendUnConfirmedPacket(void)
 {    
-    node.TimerValue(&appTimer, APP_INTERVAL_MS);
-    node.TimerStart(&appTimer);
+    TimerSetValue(&appTimer, APP_INTERVAL_MS);
+    TimerStart(&appTimer);
 
     const char * data = "DFRobot"; 
     uint32_t datalen = strlen(data);
@@ -127,10 +124,9 @@ void setup()
         while(1);
     }
     //node.init(DR_5, 16, /*adr = */false, /*dutyCycle =*/LORAWAN_DUTYCYCLE_OFF);
-    node.TimerInit(&appTimer, userSendUnConfirmedPacket);   // Initialize timer event
-    node.setSleepMode(MCU_ACTIVE);                          // Set MCU to active mode
-    node.setTxHander(txCb);                                 // Set the callback function for sending data
-    node.setRxHander(rxCb);                                 // Set the callback function for receiving data
+    TimerInit(&appTimer, userSendUnConfirmedPacket);   // Initialize timer event
+    node.setTxCB(txCb);                                 // Set the callback function for sending data
+    node.setRxCB(rxCb);                                 // Set the callback function for receiving data
     node.join(joinCb);                                      // Join the LoRaWAN network
     printf("Join Request Packet\n");
 }

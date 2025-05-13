@@ -2,12 +2,9 @@
 
 DFRobot_LoRaWAN is an Arduino communication library developed for the DFR1195 node, enabling the node to communicate with the gateway using the LoRaWAN 1.0.3 protocol stack. It also integrates the DFRobot_LoRaRadio library, allowing for LoRa point-to-point communication between nodes.
 
-Product images
+## Product Link 
 
-![Product Image](./resources/images/DFR1195.png)
-
-## Product Link (Link to DFRobot store)
-
+    URL: https://www.dfrobot.com
     SKU: DFR1195
 
 ## Table of Contents
@@ -22,22 +19,48 @@ Product images
 
 ## Summary
 
-Using this library allows end nodes to join a LoRaWAN network via OTAA or ABP, communicate with the gateway using confirmed or unconfirmed packets, and enables multi-node communication in LoRaRadio mode. Both LoRaWAN and LoRaRadio communication modes support low power consumption (µA).
+Using this library allows end nodes to join a LoRaWAN network via OTAA or ABP, communicate with the gateway using confirmed or unconfirmed packets, and enables multi-node communication in LoRaRadio mode. Both LoRaWAN and LoRaRadio communication modes support low power consumption (µA). 
 
 ## Installation
 
-To use this library, first download the library file, paste it into the \Arduino\libraries directory, then open the examples folder and run the demo in the folder.
+To use this library, first download the library file, paste it into the \Arduino\libraries directory, then open the examples folder and run the demo in the folder. 
 
 ## DFRobot_LoRaWAN Methods
 
 ```C++
     /**
+     * @fn LoRaWAN_Node
+     * @brief OTAA mode node constructor.
+     * @param devEui Device unique identifier, composed of 16 hexadecimal numbers
+     * @param appEui Network identifier during the OTAA join process, composed of 16 hexadecimal numbers
+     * @param appKey Application key, composed of 32 hexadecimal numbers
+     * @param classType The operating mode of the node device, which can be CLASS_A or CLASS_C, with CLASS_A being the default
+     * @n CLASS_A Basic mode
+     * @n CLASS_C Continuous reception mode
+     * @return OTAA mode node object
+     */
+    LoRaWAN_Node(const uint8_t *devEui, const uint8_t *appEui, const uint8_t *appKey, DeviceClass_t classType = CLASS_A);
+
+    /**
+     * @fn LoRaWAN_Node
+     * @brief ABP mode node constructor.
+     * @param devAddr Node device address, composed of 8 hexadecimal numbers
+     * @param nwkSKey LoRaWAN network layer encryption key, composed of 32 hexadecimal numbers
+     * @param appSKey LoRaWAN application layer encryption key, composed of 32 hexadecimal numbers
+     * @param classType The operating mode of the node device, which can be CLASS_A or CLASS_C, with CLASS_A being the default
+     * @n CLASS_A Basic mode
+     * @n CLASS_C Continuous reception mode
+     * @return OTAA mode node object
+     */
+    LoRaWAN_Node(const uint32_t devAddr, const uint8_t *nwkSKey, const uint8_t *appSKey, DeviceClass_t classType = CLASS_A);
+
+    /**
      * @fn init
      * @brief LoRaWAN node initialization with specified parameters.
      * @param dataRate Node communication data rate
      * @param txEirp Equivalent Isotropically Radiated Power(dBm)
-     * @param adr Whether the node has the adaptive data rate feature enabled, default is 		  disabled
-     * @param dutyCycle Whether duty cycle transmission limitation is enabled, which can 		 be LORAWAN_DUTYCYCLE_ON or LORAWAN_DUTYCYCLE_OFF, with LORAWAN_DUTYCYCLE_OFF 			being the default.
+     * @param adr Whether the node has the adaptive data rate feature enabled, default is disabled
+     * @param dutyCycle Whether duty cycle transmission limitation is enabled, which can be LORAWAN_DUTYCYCLE_ON or LORAWAN_DUTYCYCLE_OFF, with LORAWAN_DUTYCYCLE_OFF being the default.
      * @n LORAWAN_DUTYCYCLE_ON Enable duty cycle transmission limitation
      * @n LORAWAN_DUTYCYCLE_OFF Disable duty cycle transmission limitation
      * @return Whether the node initialization was successful
@@ -48,7 +71,7 @@ To use this library, first download the library file, paste it into the \Arduino
 
     /**
      * @fn join
-     * @brief LoRaWAN node performs the network join operation and sets a user-defined 			join callback function.
+     * @brief LoRaWAN node performs the network join operation and sets a user-defined join callback function.
      * @param callback User-defined join callback function, of type joinCallback
      * @return Whether the node actually performed the join operation
      * @retval 1 Actually performed the join operation
@@ -57,18 +80,18 @@ To use this library, first download the library file, paste it into the \Arduino
     int join(joinCallback callback);
 
     /**
-     * @fn isNetworkJoined
+     * @fn isJoined
      * @brief Determine whether the node has joined the LoRaWAN network.
      * @param None
      * @return Whether the node has joined the LoRaWAN network
      * @retval true Already joined the network
      * @retval false Not yet joined the network
      */
-    bool isNetworkJoined();
+    bool isJoined();
 
     /**
      * @fn getNetID
-     * @brief Get the node's current network identifier, used to distinguish between 			different networks within the same region.
+     * @brief Get the node's current network identifier, used to distinguish between different networks within the same region.
      * @param None
      * @return Current network identifier, composed of 6 hexadecimal numbers
      */
@@ -91,12 +114,12 @@ To use this library, first download the library file, paste it into the \Arduino
     uint8_t getDataRate();
 
     /**
-     * @fn getTxEirp
+     * @fn getEIRP
      * @brief Get the node's equivalent isotropically radiated power(dBm)
      * @param None
      * @return Equivalent isotropically radiated power(dBm)
      */
-    uint8_t getTxEirp();
+    uint8_t getEIRP();
 
     /**
      * @fn getNwkSKey
@@ -131,43 +154,33 @@ To use this library, first download the library file, paste it into the \Arduino
     uint32_t getLastDownCounter();
 
     /**
-     * @fn setSleepMode
-     * @brief Set the MCU's operating mode.
-     * @param mcusleepmode MCU operating mode, which can be either MCU_ACTIVE or 				MCU_DEEP_SLEEP
-     * @n MCU_ACTIVE Normal mode
-     * @n MCU_DEEP_SLEEP Low power mode, in this mode the node enters sleep after the 			timer starts, wakes up after the set timer duration, and executes the timer 			callback function
-     * @return None
-     */
-    void setSleepMode(eMcuSleepMode_t mcusleepmode);
-
-    /**
-     * @fn sleepMs
+     * @fn deepSleepMs
      * @brief Set the MCU to immediately enter sleep for a specified duration.
-     * @param timesleep Node sleep duration(ms)
+     * @param timesleep Node sleep duration(ms).If set to 0, the device will never wake up.
      * @return None
      */
-    void sleepMs(uint32_t timesleep);
+    void deepSleepMs(uint32_t timesleep);
 
     /**
-     * @fn setRxHander
+     * @fn setRxCB
      * @brief Set the user-defined callback function for when the node receives data.
      * @param callback User-defined data reception callback function, of type rxHandler
      * @return Set result
      * @retval true Set successful
      * @retval false Set failed, please check if callback is NULL
      */
-    bool setRxHander(rxHander callback);
+    bool setRxCB(rxCB callback);
 
     /**
-     * @fn setTxHander
+     * @fn setTxCB
      * @brief Set the user-defined callback function for when the node sends data.
-     * @param callback User-defined data transmission callback function, of type 				txHandler
+     * @param callback User-defined data transmission callback function, of type txHandler
      * @return Set result
      * @retval true Set successful
      * @retval false Set failed, please check if callback is NULL
      */
-    bool setTxHander(txHander callback);
-  
+    bool setTxCB(txCB callback);
+    
     /**
      * @fn sendConfirmedPacket
      * @brief Node sends data to the gateway in confirmed packet mode.
@@ -191,50 +204,37 @@ To use this library, first download the library file, paste it into the \Arduino
      * @retval false Send failed
      */
     bool sendUnconfirmedPacket(uint8_t port, void *buffer, uint8_t size);
-  
-    /**
-     * @fn TimerInit
-     * @brief Node timer initialization function; in low power mode, the timer callback 		function will execute after the MCU wakes up.
-     * @param obj Timer object
-     * @param callback Timer callback function
-     * @return None
-     */
-    void TimerInit(TimerEvent_t *obj, void (*callback)(void));
 
     /**
-     * @fn TimerValue
-     * @brief Node timer timeout setting function; in low power mode, the value parameter 		  represents the MCU's sleep duration.
-     * @param obj Timer object
-     * @param value Timer timeout duration, which in sleep mode corresponds to the node's 		  sleep duration(ms)
-     * @return None
+     * @fn setSubBand
+     * @brief Set the frequency band for the US915 regional node.
+     * @param subBand US915 region sub-band number (1–8, Default: 2).
+     * @n The sub-band numbers correspond to channels. For specific frequency details of each channel, refer to: DFRobot_LoRaWAN\CHANNELS.MD
+     * @n SubBand 1: channel 0-7, 64
+     * @n SubBand 2: channel 8-15, 65
+     * @n SubBand 3: channel 16-23, 66
+     * @n SubBand 4: channel 24-31, 67
+     * @n SubBand 5: channel 32-39, 68
+     * @n SubBand 6: channel 40-47, 69
+     * @n SubBand 7: channel 48-55, 70
+     * @n SubBand 8: channel 56-63, 71
+     * @return Whether the sub-band configuration was successful
+     * @retval true Set successful
+     * @retval false Set failed
      */
-    void TimerValue(TimerEvent_t *obj, uint32_t value);
-
-    /**
-     * @fn TimerStart
-     * @brief Node timer start function; in low power mode, the MCU immediately enters 			sleep after calling this function.
-     * @param obj Timer object
-     * @return None
-     */
-    void TimerStart(TimerEvent_t *obj);
-
-    /**
-     * @fn attachInterrupt
-     * @brief Node button interrupt callback binding function.
-     * @details In low power mode, pressing the button can wake the MCU from sleep mode 		and execute the user-defined button interrupt callback.
-     * @param pin Button pin number, which must be connected to an interrupt capable of 		waking the MCU
-     * @param cb User-defined button interrupt callback function, of type buttonCallback
-     * @param mode Trigger mode, which can be LOW or HIGH
-     * @n LOW Trigger on LOW level
-     * @n HIGH Trigger on HIGH level
-     * @return None
-     */
-    void attachInterrupt(uint8_t pin, buttonCallback cb, int mode);
+    bool setSubBand(uint8_t subBand);
 ```
 
 ## DFRobot_LoRaRadio Methods
 
 ```C++
+    /**
+     * @fn DFRobot_LoRaRadio
+     * @brief Constructor for the DFRobot_LoRaRadio class.
+     * @return LoRaRadio node object
+     */
+    DFRobot_LoRaRadio();
+
     /**
      * @fn init
      * @brief Initializes the LoRa radio module.
@@ -243,52 +243,44 @@ To use this library, first download the library file, paste it into the \Arduino
     void init();
 
     /**
-     * @fn setTxEirp
+     * @fn setEIRP
      * @brief Sets the transmission power of the LoRa radio module.
-     * @param txeirp Equivalent Isotropically Radiated Power(dBm)
+     * @param EIRP Equivalent Isotropically Radiated Power(dBm)
      * @return None
      */
-    void setTxEirp(int8_t txeirp);
+    void setEIRP(int8_t EIRP);
 
     /**
-     * @fn setSpreadingFactor
+     * @fn setSF
      * @brief Set the spreading factor of the radio.
      * @param SF The spreading factor to set (unsigned 8-bit integer).
      * @return None
      */
-    void setSpreadingFactor(uint8_t SF);
+    void setSF(uint8_t SF);
 
     /**
-     * @fn setBandwidth
+     * @fn setBW
      * @brief Set the bandwidth of the radio.
-     * @param bandwidth The bandwidth to set (enumeration type eBandwidths_t).
+     * @param BW The bandwidth to set (enumeration type eBandwidths_t).
      * @return None
      */
-    void setBandwidth(eBandwidths_t bandwidth);
+    void setBW(eBandwidths_t BW);
 
     /**
-     * @fn setSync
-     * @brief Sets the synchronization word of the LoRa radio module.
-     * @param sync The synchronization word.
-     * @return None
-     */
-    void setSync(uint16_t sync);
-
-    /**
-     * @fn setFrequency
+     * @fn setFreq
      * @brief Sets the frequency of the LoRa radio module.
      * @param freq The frequency, in Hz.
      * @return None
      */
-    void setFrequency(uint32_t freq);
+    void setFreq(uint32_t freq);
 
     /**
-     * @fn setTxCallback
+     * @fn setTxCB
      * @brief Sets the callback function for when data transmission is completed.
      * @param cb The callback function.
      * @return None
      */
-    void setTxCallback(onTxDone cb);
+    void setTxCB(txCB cb);
 
     /**
      * @fn sendData
@@ -300,28 +292,28 @@ To use this library, first download the library file, paste it into the \Arduino
     void sendData(const void *data, uint8_t size);
 
     /**
-     * @fn setRxCallBack
+     * @fn setRxCB
      * @brief Sets the callback function for when data reception is completed.
      * @param cb The callback function.
      * @return None
      */
-    void setRxCallBack(onRxDone cb);
+    void setRxCB(rxCB cb);
 
     /**
-     * @fn setRxTimeOutCallback
+     * @fn setRxTimeOutCB
      * @brief Sets the callback function for when data reception times out.
      * @param cb The callback
      * @return None
      */
-     void setRxTimeOutCallback(onRxTimeout cb);
+     void setRxTimeOutCB(rxTimeOutCB cb);
 
      /**
-      * @fn setRxErrorCallback
+      * @fn setRxErrorCB
       * @brief Sets the callback function for when data reception encounters an error.
       * @param cb The callback function.
       * @return None
       */
-     void setRxErrorCallback(onRxError cb);
+     void setRxErrorCB(rxErrorCB cb);
 
      /**
       * @fn startRx
@@ -332,29 +324,31 @@ To use this library, first download the library file, paste it into the \Arduino
      void startRx(uint32_t timeout);
 
      /**
-      * @fn setCadCallback
-      * @brief Sets the callback function for when channel activity detection is 				 completed.
+      * @fn setCadCB
+      * @brief Sets the callback function for when channel activity detection is completed.
       * @param cb The callback function.
       * @return None
       */
-     void setCadCallback(OnCadDone cb);
+     void setCadCB(cadDoneCB cb);
 
      /**
       * @fn startCad
       * @brief Starts channel activity detection using the LoRa radio module.
-      * @param dataRate The data rate, in bits per second.
-      * @param cadSymbolNum the number of symbols to be used for channel activity 				 detection operation.
+      * @param cadSymbolNum the number of symbols to be used for channel activity detection operation.
+      * @param cadDetPeak Peak detection threshold, Signals above this threshold are considered definite channel activity.
+      * @param cadDetMin Minimum detection threshold, Signals between cadDetMin and cadDetPeak trigger potential activity.
       * @return None
       */
-     void startCad(uint8_t dataRate, RadioLoRaCadSymbols_t cadSymbolNum);
+     void startCad(RadioLoRaCadSymbols_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin);
 
      /**
-      * @fn radioDeepSleep
-      * @brief Puts the LoRa radio module and MCU in deep sleep mode.
+      * @fn deepSleepMs
+      * @brief Set the MCU to immediately enter sleep for a specified duration.
+      * @param timesleep Node sleep duration(ms).If set to 0, the device will never wake up.
       * @return None
       */
-     void radioDeepSleep();
-   
+     void deepSleepMs(uint32_t timesleep);
+     
      /**
       * @fn setEncryptKey
       * @brief Set the encryption key for the radio.
@@ -366,11 +360,10 @@ To use this library, first download the library file, paste it into the \Arduino
      /**
       * @fn dumpRegisters
       * @brief Dump the registers of the radio.
-      * @n This function prints the current values of all the registers of the radio to 		 the output (serial monitor).
+      * @n This function prints the current values of all the registers of the radio to the output (serial monitor)
       * @return None
       */
      void dumpRegisters();
-
 ```
 
 ## Compatibility

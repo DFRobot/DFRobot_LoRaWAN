@@ -10,10 +10,7 @@
  *@author [Martin](Martin@dfrobot.com)
  *@version V0.0.1
  *@date 2025-3-12
- *@wiki en:https://wiki.dfrobot.com/lorawan
- *@wiki cn:https://wiki.dfrobot.com.cn/lorawan
- *@get from https://www.dfrobot.com
- *@url https://gitee.com/dfrobotcd/lorawan-esp32-sdk
+ *@url https://github.com/DFRobot/DFRobot_LoRaWAN
  */
 #include "DFRobot_LoRaRadio.h"
 
@@ -74,6 +71,7 @@ void loraRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
     screen.printf("Recv %dst", ++counter);
     screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_2);
     screen.printf("packet");
+    radio.startRx(10 * 1000);
 }
 
 void loraRxTimeout(void)
@@ -86,6 +84,19 @@ void loraRxTimeout(void)
     screen.setTextSize(TEXT_SIZE);
     screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_1);
     screen.printf("LoRaRxTimeout");
+}
+
+void loraRxError(void)
+{
+    printf("LoRaRxError\n");
+    radio.startRx(10 * 1000);    // Start receiving and set the receive timeout to 10s
+    screen.fillScreen(BG_COLOR);    
+    screen.setTextColor(TEXT_COLOR);
+    screen.setFont(TEXT_FONT);
+    screen.setTextSize(TEXT_SIZE);
+    screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_1);
+    screen.printf("LoRaRxError");
+
 }
 
 void setup()
@@ -108,11 +119,13 @@ void setup()
     delay(5000);    // Open the serial port within 5 seconds after uploading to view full print output
     radio.init();   // Initialize the LoRa node with a default bandwidth of 125 KHz
     
-    radio.setRxCallBack(loraRxDone);                    // Set the receive complete callback function
-    radio.setRxTimeOutCallback(loraRxTimeout);          // Set the receive timeout callback function
-    radio.setFrequency(RF_FREQUENCY);                   // Set the communication frequency
-    radio.setSpreadingFactor(LORA_SPREADING_FACTOR);    // Set the spreading factor
-    radio.startRx(10 * 1000);                           // Start receiving and set the receive timeout to 10s
+    radio.setRxCB(loraRxDone);                    // Set the receive complete callback function
+    radio.setRxTimeOutCB(loraRxTimeout);          // Set the receive timeout callback function
+    radio.setRxErrorCB(loraRxError);              // Set the receive error callback function
+    radio.setFreq(RF_FREQUENCY);                  // Set the communication frequency
+    radio.setSF(LORA_SPREADING_FACTOR);           // Set the spreading factor
+    radio.setBW(BW_125);                          // Set the bandwidth
+    radio.startRx(10 * 1000);                     // Start receiving and set the receive timeout to 10s
 }
 
 void loop()

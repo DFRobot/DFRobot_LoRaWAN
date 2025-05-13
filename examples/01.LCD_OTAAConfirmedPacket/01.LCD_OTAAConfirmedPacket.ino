@@ -11,10 +11,7 @@
  *@author [Martin](Martin@dfrobot.com)
  *@version V0.0.1
  *@date 2025-2-21
- *@wiki en:https://wiki.dfrobot.com/lorawan
- *@wiki cn:https://wiki.dfrobot.com.cn/lorawan
- *@get from https://www.dfrobot.com
- *@url https://gitee.com/dfrobotcd/lorawan-esp32-sdk
+ *@url https://github.com/DFRobot/DFRobot_LoRaWAN
  */
 #include "DFRobot_LoRaWAN.h"
 
@@ -60,7 +57,7 @@ TimerEvent_t appTimer;
 // Join network callback function
 void joinCb(bool isOk, int16_t rssi, int8_t snr)
 {
-    screen.fillScreen(BG_COLOR);    
+    screen.fillScreen(BG_COLOR);
     screen.setTextColor(TEXT_COLOR);
     screen.setFont(TEXT_FONT);
     screen.setTextSize(TEXT_SIZE);
@@ -75,8 +72,8 @@ void joinCb(bool isOk, int16_t rssi, int8_t snr)
         screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_4);
         screen.printf("Snr = %d", snr);
         delay(5000);       
-        node.TimerValue(&appTimer, APP_INTERVAL_MS);
-        node.TimerStart(&appTimer);
+        TimerSetValue(&appTimer, APP_INTERVAL_MS);
+        TimerStart(&appTimer);
     }else{
         screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_1);
         screen.printf("OTAA join Err!");
@@ -97,8 +94,8 @@ void joinCb(bool isOk, int16_t rssi, int8_t snr)
 
 void userSendConfirmedPacket(void)
 {
-    node.TimerValue(&appTimer, APP_INTERVAL_MS);
-    node.TimerStart(&appTimer);
+    TimerSetValue(&appTimer, APP_INTERVAL_MS);
+    TimerStart(&appTimer);
 
     const char * data = "DFRobot"; 
     uint32_t datalen = strlen(data);
@@ -209,11 +206,13 @@ void setup()
         while(1);
     }
     //node.init(DR_5, 16, /*adr = */false, /*dutyCycle =*/LORAWAN_DUTYCYCLE_OFF);
-    node.TimerInit(&appTimer, userSendConfirmedPacket); // Initialize timer event
-    node.setSleepMode(MCU_ACTIVE);                      // Set MCU to active mode
-    node.setTxHander(txCb);                             // Set the callback function for sending data
-    node.setRxHander(rxCb);                             // Set the callback function for receiving data
-    node.join(joinCb);                                  // Join the LoRaWAN network
+#ifdef REGION_US915
+    setSubBand(2);
+#endif
+    TimerInit(&appTimer, userSendConfirmedPacket);  // Initialize timer event
+    node.setTxCB(txCb);                             // Set the callback function for sending data
+    node.setRxCB(rxCb);                             // Set the callback function for receiving data
+    node.join(joinCb);                              // Join the LoRaWAN network
 
     screen.fillScreen(BG_COLOR);
     screen.setTextColor(TEXT_COLOR);

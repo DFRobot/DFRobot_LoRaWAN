@@ -10,10 +10,7 @@
  *@author [Martin](Martin@dfrobot.com)
  *@version V0.0.1
  *@date 2025-3-28
- *@wiki en:https://wiki.dfrobot.com/lorawan
- *@wiki cn:https://wiki.dfrobot.com.cn/lorawan
- *@get from https://www.dfrobot.com
- *@url https://gitee.com/dfrobotcd/lorawan-esp32-sdk
+ *@url https://github.com/DFRobot/DFRobot_LoRaWAN
  */
 
  #include "DFRobot_LoRaWAN.h"

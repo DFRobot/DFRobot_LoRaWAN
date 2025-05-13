@@ -16,17 +16,16 @@ TimerEvent_t	KEYWORD1
 
 init 	KEYWORD2
 Backlight 	KEYWORD2
-setSleepMode 	KEYWORD2
-sleepMs 	KEYWORD2
-setTxHander 	KEYWORD2
-setRxHander 	KEYWORD2
+deepSleepMs 	KEYWORD2
+setTxCB 	KEYWORD2
+setRxCB 	KEYWORD2
 join 	KEYWORD2
-isNetworkJoined 	KEYWORD2
+isJoined 	KEYWORD2
 
 getNetID 	KEYWORD2
 getDevAddr 	KEYWORD2
 getDataRate 	KEYWORD2
-getTxEirp 	KEYWORD2
+getEIRP 	KEYWORD2
 getNwkSKey 	KEYWORD2
 getAppSKey 	KEYWORD2
 getLastUplinkCounter 	KEYWORD2
@@ -143,25 +142,26 @@ DFRobot_LoRaRadio	KEYWORD1
 #######################################
 
 init	KEYWORD2
-setTxEirp	KEYWORD2
-setBandwidth	KEYWORD2
+setEIRP	KEYWORD2
+setBW	KEYWORD2
 setSync	KEYWORD2
-setFrequency	KEYWORD2
+setFreq	KEYWORD2
 setTxParam	KEYWORD2
-setTxCallback	KEYWORD2
+setTxCB	KEYWORD2
 
 sendData	KEYWORD2
-setSpreadingFactor	KEYWORD2
-setRxTimeOutCallback	KEYWORD2
-setRxErrorCallback	KEYWORD2
-setRxCallBack	KEYWORD2
+setSF	KEYWORD2
+setRxTimeOutCB	KEYWORD2
+setRxErrorCB	KEYWORD2
+setRxCB	KEYWORD2
 setRxTimeOut	KEYWORD2
 setRxError	KEYWORD2
 startRx	KEYWORD2
-setCadCallback	KEYWORD2
+setCadCB	KEYWORD2
 startCad	KEYWORD2
-radioDeepSleep	KEYWORD2
+deepSleepMs	KEYWORD2
 setEncryptKey	KEYWORD2
+dumpRegisters	KEYWORD2
 
 #######################################
 # Constants (LITERAL1) DFRobot_LoRaRadio

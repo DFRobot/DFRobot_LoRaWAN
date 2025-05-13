@@ -1,19 +1,15 @@
 /*!
  *@file DeepSleepWakeUp.ino
  *@brief LoRaWAN low-power mode.
- *@details After the node joins the network or sends data, it will enter 
-           sleep mode and wake up after the specified timer duration to 
-           continue sending data before entering sleep again. During sleep, 
-           pressing a button can wake up the node and print some network parameters.
+ *@details The node transmits data, enters deep sleep, and wakes periodically for the next transmission. 
+           A button press during sleep forces wakeup to log network parameters.If the join fails, we 
+           implement a backoff retry mechanism with intervals ranging from 5 seconds up to a maximum of 5 minutes.
  *@copyright Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  *@licence The MIT License (MIT)
  *@author [Martin](Martin@dfrobot.com)
  *@version V0.0.1
  *@date 2025-2-21
- *@wiki en:https://wiki.dfrobot.com/lorawan
- *@wiki cn:https://wiki.dfrobot.com.cn/lorawan
- *@get from https://www.dfrobot.com
- *@url https://gitee.com/dfrobotcd/lorawan-esp32-sdk
+ *@url https://github.com/DFRobot/DFRobot_LoRaWAN
  */
 
 #include "DFRobot_LoRaWAN.h"
@@ -58,7 +54,28 @@ uint8_t buffer[255];
 uint8_t port = 2;
 // LoRaWAN_Node node(DevEUI, AppEUI, AppKey, /*classType=*/CLASS_A);
 LoRaWAN_Node node(DevEUI, AppEUI, AppKey);
-TimerEvent_t appTimer;
+// Rejoin count
+RTC_DATA_ATTR uint8_t CurReJoinTimes = 0;
+// ​Downlink Reception Success Flag​
+uint8_t rxFlag = 1;
+uint32_t prevTimeStamp = 0;
+
+const char* wakeup_reason_strings[] = 
+{
+    "ESP_SLEEP_WAKEUP_UNDEFINED",
+    "ESP_SLEEP_WAKEUP_ALL",
+    "ESP_SLEEP_WAKEUP_EXT0",
+    "ESP_SLEEP_WAKEUP_EXT1",
+    "ESP_SLEEP_WAKEUP_TIMER",
+    "ESP_SLEEP_WAKEUP_TOUCHPAD",
+    "ESP_SLEEP_WAKEUP_ULP",
+    "ESP_SLEEP_WAKEUP_GPIO",
+    "ESP_SLEEP_WAKEUP_UART",
+    "ESP_SLEEP_WAKEUP_WIFI",
+    "ESP_SLEEP_WAKEUP_COCPU",
+    "ESP_SLEEP_WAKEUP_COCPU_TRAP_TRIG",
+    "ESP_SLEEP_WAKEUP_BT"
+};
 
 // Join network callback function
 void joinCb(bool isOk, int16_t rssi, int8_t snr)
@@ -69,6 +86,7 @@ void joinCb(bool isOk, int16_t rssi, int8_t snr)
     screen.setTextSize(TEXT_SIZE);
 
     if(isOk){
+        CurReJoinTimes = 0;
         printf("JOIN SUCCESS\n");
         printf("JoinAccept Packet rssi = %d snr = %d\n", rssi, snr);
         printf("NetID = %06X\n", node.getNetID());
@@ -96,8 +114,8 @@ void joinCb(bool isOk, int16_t rssi, int8_t snr)
         screen.printf("Snr = %d", snr);
         delay(5000);
 
-        node.TimerValue(&appTimer, APP_INTERVAL_MS);
-        node.TimerStart(&appTimer);
+        userSendConfirmedPacket();  // Send data after successful network join        
+
     }else{
         printf("OTAA join error\n");
         printf("Check Whether the device has been registered on the gateway!\n");
@@ -107,14 +125,14 @@ void joinCb(bool isOk, int16_t rssi, int8_t snr)
         screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_1);
         screen.printf("OTAA join Err!");
         delay(2000);    
-        
-        /*
-        * If the network joining fails in sleep mode, 
-        * it will automatically attempt to join the network again, 
-        * so there is no need to call "joinCb" here again.        
-        */
-    }
-  
+
+        // Backoff join procedure
+        CurReJoinTimes++; 
+        // printf("\n\n------CurReJoinTimes = %d------\n\n", CurReJoinTimes);
+        uint64_t backoff_time_ms = 5000 * (1ULL << (CurReJoinTimes - 1));
+        backoff_time_ms = (backoff_time_ms > 300000) ? 300000 : backoff_time_ms;
+        node.deepSleepMs(backoff_time_ms);
+    }  
 }
 
 void userSendConfirmedPacket(void)
@@ -123,6 +141,7 @@ void userSendConfirmedPacket(void)
     uint32_t datalen = strlen(data);
     memcpy(buffer, data, datalen);    
     node.sendConfirmedPacket(port, buffer, /*size=*/datalen);
+    rxFlag = 0;
     
     screen.fillScreen(BG_COLOR);    
     screen.setTextColor(TEXT_COLOR);
@@ -158,6 +177,7 @@ void txCb(bool isconfirm, int8_t datarate, int8_t txeirp, uint8_t Channel)
 // Receive data callback function
 void rxCb(void *buffer, uint16_t size, uint8_t port, int16_t rssi, int8_t snr, bool ackReceived, uint16_t uplinkCounter, uint16_t downlinkCounter)
 {
+    rxFlag = 1;
     screen.fillScreen(BG_COLOR);    
     screen.setTextColor(TEXT_COLOR);
     screen.setFont(TEXT_FONT);
@@ -172,26 +192,20 @@ void rxCb(void *buffer, uint16_t size, uint8_t port, int16_t rssi, int8_t snr, b
         screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_4);
         screen.printf("DownCount = %d", downlinkCounter);
     }
+    delay(3000);
 
     // You can print the received data here
     // if(size != 0){
-    //     screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_1);
-    //     screen.printf("Data:%s\n", (uint8_t*)buffer);
-    //     screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_2);
+    //     printf("Data:%s\n", (uint8_t*)buffer);
     //     for(uint8_t i = 0; i < size; i++){
-    //         screen.printf(",0x%x",((uint8_t*)buffer)[i]);
+    //         printf(",0x%x",((uint8_t*)buffer)[i]);
     //     }
     // }
-
-    printf("enter deep sleep");
-    delay(3000);
-
-    node.TimerValue(&appTimer, APP_INTERVAL_MS);
-    node.TimerStart(&appTimer);
+    node.deepSleepMs(APP_INTERVAL_MS);      // MCU sleep for a specified duration
 }
 
-// Button interrupt callback function
-void buttonCB()
+// Handle button-triggered wakeup: display node info and return to sleep
+void buttonWakeupHandler()
 {    
     screen.fillScreen(BG_COLOR);    
     screen.setTextColor(TEXT_COLOR);
@@ -202,14 +216,15 @@ void buttonCB()
     screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_2);
     screen.printf("dataRate: %d\n", node.getDataRate());
     screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_3);
-    screen.printf("txEirp: %d\n", node.getTxEirp());
+    screen.printf("txEirp: %d\n", node.getEIRP());
     screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_4);
     screen.printf("netID: %d\n", node.getNetID());
+    printf("LastDownlinkCounter = %d\n", node.getLastDownCounter());
+    printf("LastUplinkCounter = %d\n", node.getLastUplinkCounter());
     
     delay(5000);
-    node.sleepMs(APP_INTERVAL_MS);      // MCU sleep for a specified duration
+    node.deepSleepMs(APP_INTERVAL_MS);      // MCU sleep for a specified duration
 }
-
 
 void setup()
 {
@@ -226,8 +241,20 @@ void setup()
     screen.setFont(TEXT_FONT);
     screen.setTextSize(TEXT_SIZE);
     screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_1);
-    screen.printf("WakeUp");    
+    screen.printf("WakeUp");
     delay(2000); 
+
+    // Set to wake up using a button press
+    esp_sleep_enable_ext0_wakeup((gpio_num_t )BTN_PIN, LOW);
+    esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+    if (wakeup_reason >= ESP_SLEEP_WAKEUP_UNDEFINED && wakeup_reason <= ESP_SLEEP_WAKEUP_BT) {
+        printf("\n\n------Wakeup reason: [%s]------\n\n", wakeup_reason_strings[wakeup_reason]);
+    } else {
+        printf("\n\n------Wakeup reason: [UNKNOWN]------\n\n");
+    }
+    if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
+        buttonWakeupHandler();
+    }
 
     /*
     * Region | Data Rate | Tx Eirp (Even Numbers Only)
@@ -251,16 +278,34 @@ void setup()
         while(1);
     }
     //node.init(DR_5, 16, /*adr = */false, /*dutyCycle =*/LORAWAN_DUTYCYCLE_OFF);
-    node.setSleepMode(MCU_DEEP_SLEEP);                      // Set MCU to low-power mode
-    node.attachInterrupt(BTN_PIN, buttonCB, LOW);           // The button should be connected to an interrupt that can wake up the CPU
-    node.setTxHander(txCb);                                 // Set the callback function for sending data
-    node.setRxHander(rxCb);                                 // Set the callback function for receiving data
-    node.TimerInit(&appTimer, userSendConfirmedPacket);     // Initialize timer event
-    node.join(joinCb);                                      // Join the LoRaWAN network   
+
+    node.setTxCB(txCb);                                 // Set the callback function for sending data
+    node.setRxCB(rxCb);                                 // Set the callback function for receiving data
+
+    if(!node.isJoined()) {
+        screen.fillScreen(BG_COLOR);        
+        screen.setTextColor(TEXT_COLOR);
+        screen.setFont(TEXT_FONT);
+        screen.setTextSize(TEXT_SIZE);
+        screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_1);
+        screen.printf("Join Request");
+        node.join(joinCb);                                  // Join the LoRaWAN network 
+    } else {
+        userSendConfirmedPacket();                          // Send data
+    }    
 }
 
 void loop()
 {
+    // ​​Prevent prolonged downlink waiting from blocking deep sleep and increasing power consumption​
+    uint32_t currTimeStamp = TimerGetCurrentTime();
+    if (currTimeStamp - prevTimeStamp >= APP_INTERVAL_MS * 2) {
+        prevTimeStamp = currTimeStamp;    
+        if (!rxFlag) {
+            node.deepSleepMs(APP_INTERVAL_MS);
+        } 
+    }
+
     delay(1000);
 }
 

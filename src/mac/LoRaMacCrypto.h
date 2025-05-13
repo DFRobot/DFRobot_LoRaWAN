@@ -335,7 +335,7 @@ LoRaMacCryptoStatus_t LoRaMacCryptoDeriveMcSessionKeyPair( AddressIdentifier_t a
  * \param   address         - Frame address
  * \param   dir             - Frame direction [0: uplink, 1: downlink]
  * \param   sequenceCounter - Frame sequence counter
- * \param  encBuffer       - Encrypted buffer
+ * \param   encBuffer       - Encrypted buffer
  */
 void LoRaMacPayloadEncrypt(const uint8_t *buffer, uint16_t size, const uint8_t *key, uint32_t address, uint8_t dir, uint32_t sequenceCounter, uint8_t *encBuffer);
 
@@ -348,7 +348,7 @@ void LoRaMacPayloadEncrypt(const uint8_t *buffer, uint16_t size, const uint8_t *
  * \param   address         - Frame address
  * \param   dir             - Frame direction [0: uplink, 1: downlink]
  * \param   sequenceCounter - Frame sequence counter
- * \param  decBuffer       - Decrypted buffer
+ * \param   decBuffer       - Decrypted buffer
  */
 void LoRaMacPayloadDecrypt(const uint8_t *buffer, uint16_t size, const uint8_t *key, uint32_t address, uint8_t dir, uint32_t sequenceCounter, uint8_t *decBuffer);
 

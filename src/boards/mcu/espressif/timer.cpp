@@ -91,14 +91,6 @@ bool timerInUse[10] = {false, false, false, false, false, false, false, false, f
 
 void TimerInit( TimerEvent_t *obj, void ( *callback )( void ) )
 {
-    // obj->Timestamp = 0;
-    // obj->ReloadValue = 0;
-    // obj->IsStarted = false;
-    // obj->IsNext2Expire = false;
-    // obj->Callback = callback;
-    // obj->Context = NULL;
-    // obj->Next = NULL;
-
     // Look for an available Ticker
 	for (int idx = 0; idx < 10; idx++)
 	{
@@ -110,8 +102,6 @@ void TimerInit( TimerEvent_t *obj, void ( *callback )( void ) )
 			return;
 		}
 	}
-	// LOG_LIB("TIM", "No more timers available!");
-	/// \todo We run out of tickers, what do we do now???
 }
 
 void TimerSetContext( TimerEvent_t *obj, void* context )
@@ -121,42 +111,6 @@ void TimerSetContext( TimerEvent_t *obj, void* context )
 
 void TimerStart( TimerEvent_t *obj )
 {
-    // uint32_t elapsedTime = 0;
-
-    // CRITICAL_SECTION_BEGIN( );
-
-    // if( ( obj == NULL ) || ( TimerExists( obj ) == true ) )
-    // {
-    //     CRITICAL_SECTION_END( );
-    //     return;
-    // }
-
-    // obj->Timestamp = obj->ReloadValue;
-    // obj->IsStarted = true;
-    // obj->IsNext2Expire = false;
-
-    // if( TimerListHead == NULL )
-    // {
-    //     RtcSetTimerContext( );
-    //     // Inserts a timer at time now + obj->Timestamp
-    //     TimerInsertNewHeadTimer( obj );
-    // }
-    // else
-    // {
-    //     elapsedTime = RtcGetTimerElapsedTime( );
-    //     obj->Timestamp += elapsedTime;
-
-    //     if( obj->Timestamp < TimerListHead->Timestamp )
-    //     {
-    //         TimerInsertNewHeadTimer( obj );
-    //     }
-    //     else
-    //     {
-    //         TimerInsertTimer( obj );
-    //     }
-    // }
-    // CRITICAL_SECTION_END( );
-
     int idx = obj->timerNum;
 	if (obj->oneShot)
 	{
@@ -360,30 +314,12 @@ void TimerReset( TimerEvent_t *obj )
 
 void TimerSetValue( TimerEvent_t *obj, uint32_t value )
 {
-    // uint32_t minValue = 0;
-    // uint32_t ticks = RtcMs2Tick( value );
-
-    // TimerStop( obj );
-
-    // minValue = RtcGetMinimumTimeout( );
-
-    // if( ticks < minValue )
-    // {
-    //     ticks = minValue;
-    // }
-
-    // obj->Timestamp = ticks;
-    // obj->ReloadValue = ticks;
-
     int idx = obj->timerNum;
 	timerTimes[idx] = value;
 }
 
 TimerTime_t TimerGetCurrentTime( void )                 //  利用esp32内置函数       mating
 {
-    // uint32_t now = RtcGetTimerValue( );
-    // return  RtcTick2Ms( now );
-
     return millis();
 }
 

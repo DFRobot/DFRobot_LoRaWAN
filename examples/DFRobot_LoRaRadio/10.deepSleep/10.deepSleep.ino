@@ -9,10 +9,7 @@
  *@author [Martin](Martin@dfrobot.com)
  *@version V0.0.1
  *@date 2025-3-12
- *@wiki en:https://wiki.dfrobot.com/lorawan
- *@wiki cn:https://wiki.dfrobot.com.cn/lorawan
- *@get from https://www.dfrobot.com
- *@url https://gitee.com/dfrobotcd/lorawan-esp32-sdk
+ *@url https://github.com/DFRobot/DFRobot_LoRaWAN
  */
 #include "DFRobot_LoRaRadio.h"
 
@@ -73,8 +70,8 @@ void loraTxDone(void)
     screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_3);
     screen.printf("Enter Sleep");
     delay(1000);
-    // Enter deep sleep
-    radio.radioDeepSleep();
+    // Enter deep sleep 10s
+    radio.deepSleepMs(10000);
 }
 
 void setup()
@@ -89,13 +86,11 @@ void setup()
     */
     // screen.Backlight(ON);
 
-    radio.setTxCallback(loraTxDone);                    // Set the transmission complete callback function
-    radio.setFrequency(RF_FREQUENCY);                   // Set the communication frequency
-    radio.setTxEirp(TX_EIRP);                           // Set the Tx Eirp
-    radio.setSpreadingFactor(LORA_SPREADING_FACTOR);    // Set the spreading factor
+    radio.setTxCB(loraTxDone);                    // Set the transmission complete callback function
+    radio.setFreq(RF_FREQUENCY);                  // Set the communication frequency
+    radio.setEIRP(TX_EIRP);                       // Set the Tx Eirp
+    radio.setSF(LORA_SPREADING_FACTOR);           // Set the spreading factor
 
-    // Set to automatically wake up after 10 seconds
-    esp_sleep_enable_timer_wakeup((uint64_t)10 * 1000 * 1000);
     // Set to wake up using a button press
     esp_sleep_enable_ext0_wakeup((gpio_num_t )BTN_PIN, LOW); 
 

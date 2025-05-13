@@ -12,10 +12,7 @@
  *@author [Martin](Martin@dfrobot.com)
  *@version V0.0.1
  *@date 2025-3-14
- *@wiki en:https://wiki.dfrobot.com/lorawan
- *@wiki cn:https://wiki.dfrobot.com.cn/lorawan
- *@get from https://www.dfrobot.com
- *@url https://gitee.com/dfrobotcd/lorawan-esp32-sdk
+ *@url https://github.com/DFRobot/DFRobot_LoRaWAN
  */
 #include "DFRobot_LoRaRadio.h"
 
@@ -76,11 +73,11 @@ void setup()
     Serial.begin(115200);   // Initialize serial communication with a baud rate of 115200
     delay(5000);            // Open the serial port within 5 seconds after uploading to view full print output
     radio.init();           // Initialize the LoRa node with a default bandwidth of 125 KHz
-    radio.setRxCallBack(loraRxDone);                    // Set the receive complete callback function
-    radio.setTxCallback(loraTxDone);                    // Set the transmission complete callback function
-    radio.setFrequency(RF_FREQUENCY);                   // Set the communication frequency
-    radio.setTxEirp(TX_EIRP);                           // Set the Tx Eirp
-    radio.setSpreadingFactor(LORA_SPREADING_FACTOR);    // Set the spreading factor
+    radio.setRxCB(loraRxDone);                    // Set the receive complete callback function
+    radio.setTxCB(loraTxDone);                    // Set the transmission complete callback function
+    radio.setFreq(RF_FREQUENCY);                   // Set the communication frequency
+    radio.setEIRP(TX_EIRP);                           // Set the Tx Eirp
+    radio.setSF(LORA_SPREADING_FACTOR);    // Set the spreading factor
 }
 
 void loop()

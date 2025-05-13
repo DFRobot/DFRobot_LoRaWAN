@@ -1236,6 +1236,14 @@ void RadioSetRxDutyCycle( uint32_t rxTime, uint32_t sleepTime )
 	SX126xSetRxDutyCycle(rxTime, sleepTime);
 }
 
+/*
+The CAD detection time, when SF=7 and BW=125kHz, is 1.024ms per symbol.
+LORA_CAD_01_SYMBOL =（2^SF）/BW     = 1.024ms
+LORA_CAD_02_SYMBOL = 2*（2^SF）/BW  = 2.048ms
+LORA_CAD_04_SYMBOL = 4*（2^SF）/BW  = 4.096ms
+LORA_CAD_08_SYMBOL = 8*（2^SF）/BW  = 8.192ms
+LORA_CAD_16_SYMBOL = 16*（2^SF）/BW = 16.384ms
+*/
 void RadioSetCadParams(uint8_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin, uint8_t cadExitMode, uint32_t cadTimeout)
 {
 	SX126xSetCadParams((RadioLoRaCadSymbols_t)cadSymbolNum, cadDetPeak, cadDetMin, (RadioCadExitModes_t)cadExitMode, cadTimeout);

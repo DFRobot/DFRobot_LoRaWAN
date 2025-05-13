@@ -189,16 +189,16 @@ struct Radio_s
      * \param [IN] preambleLen  Sets the Preamble length                                        参数6 preambleLen 前导码长度 
      *                          FSK : Number of bytes
      *                          LoRa: Length in symbols (the hardware adds 4 more symbols)
-     * \param [IN] symbTimeout  Sets the RxSingle timeout value                                 参数7 symbTimeout 符号超时时间
+     * \param [IN] symbTimeout  Sets the RxSingle timeout value                                 参数7 symbTimeout 码元超时时间
      *                          FSK : timeout in number of bytes
      *                          LoRa: timeout in symbols
      * \param [IN] fixLen       Fixed length packets [0: variable, 1: fixed]                    参数8 fixlen 固定长度报文 (0:可变  1:固定)
      * \param [IN] payloadLen   Sets payload length when fixed length is used                   参数9 payloadLen 固定报文长度时，报文的长度
      * \param [IN] crcOn        Enables/Disables the CRC [0: OFF, 1: ON]                        参数10 crcOn 是否启用CRC校验        
-     * \param [IN] freqHopOn    Enables disables the intra-packet frequency hopping             参数11 freqHopOn 是否启用报文内调频功能
+     * \param [IN] freqHopOn    Enables disables the intra-packet frequency hopping             参数11 freqHopOn 是否启用报文内跳频功能
      *                          FSK : N/A ( set to 0 )
      *                          LoRa: [0: OFF, 1: ON]
-     * \param [IN] hopPeriod    Number of symbols between each hop                              参数12 hopPeriod 每一跳之间的符号数
+     * \param [IN] hopPeriod    Number of symbols between each hop                              参数12 hopPeriod 每一跳之间的码元数
      *                          FSK : N/A ( set to 0 )
      *                          LoRa: Number of symbols
      * \param [IN] iqInverted   Inverts IQ signals (LoRa only)                                  参数13 iqInverted 是否反转中断信号
@@ -230,7 +230,7 @@ struct Radio_s
      *                          FSK : 600..300000 bits/s
      *                          LoRa: [6: 64, 7: 128, 8: 256, 9: 512,
      *                                10: 1024, 11: 2048, 12: 4096  chips]
-     * \param [IN] coderate     Sets the coding rate (LoRa only)                                参数6 coderate 码率 (LoRa only)
+     * \param [IN] coderate     Sets the coding rate (LoRa only)                                参数6 coderate  (LoRa only)
      *                          FSK : N/A ( set to 0 )
      *                          LoRa: [1: 4/5, 2: 4/6, 3: 4/7, 4: 4/8]
      * \param [IN] preambleLen  Sets the preamble length                                        参数7 preambleLen 前导码长度
@@ -238,10 +238,10 @@ struct Radio_s
      *                          LoRa: Length in symbols (the hardware adds 4 more symbols)
      * \param [IN] fixLen       Fixed length packets [0: variable, 1: fixed]                    参数8 fixlen 固定长度报文 (0:可变  1:固定)
      * \param [IN] crcOn        Enables disables the CRC [0: OFF, 1: ON]                        参数9 crcOn 是否启用CRC校验
-     * \param [IN] freqHopOn    Enables disables the intra-packet frequency hopping             参数10 freqHopOn 是否启用报文内调频功能
+     * \param [IN] freqHopOn    Enables disables the intra-packet frequency hopping             参数10 freqHopOn 是否启用报文内跳频功能
      *                          FSK : N/A ( set to 0 )
      *                          LoRa: [0: OFF, 1: ON]
-     * \param [IN] hopPeriod    Number of symbols between each hop                              参数11 hopPeriod 每一跳之间的符号数                      
+     * \param [IN] hopPeriod    Number of symbols between each hop                              参数11 hopPeriod 每一跳之间的码元数                      
      *                          FSK : N/A ( set to 0 )
      *                          LoRa: Number of symbols
      * \param [IN] iqInverted   Inverts IQ signals (LoRa only)                                  参数12 iqInverted 是否反转中断信号

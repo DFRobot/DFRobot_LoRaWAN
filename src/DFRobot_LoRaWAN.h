@@ -7,7 +7,7 @@
  *@version V0.0.1
  *@date 2025-1-17
  *@get from https://www.dfrobot.com
- *@url https://gitee.com/dfrobotcd/lorawan-esp32-sdk
+ *@url https://github.com/DFRobot/DFRobot_LoRaWAN
  */
 #ifndef __LORAWANNODE_H_
 #define __LORAWANNODE_H_
@@ -39,7 +39,7 @@
 typedef void (*joinCallback)(bool isOk, int16_t rssi, int8_t snr);
 
 /**
- * @fn rxHander
+ * @fn rxCB
  * @brief The callback function for the node to receive data from the gateway.
  * @details The user-defined data reception callback function can obtain the received data and some network parameters.
  * @param buffer Received data
@@ -52,10 +52,10 @@ typedef void (*joinCallback)(bool isOk, int16_t rssi, int8_t snr);
  * @param downlinkCounter The downlink frame count of the last transmission
  * @return None
  */
-typedef void (*rxHander)(void *buffer, uint16_t size, uint8_t port, int16_t rssi, int8_t snr, bool ackReceived, uint16_t uplinkCounter, uint16_t downlinkCounter);
+typedef void (*rxCB)(void *buffer, uint16_t size, uint8_t port, int16_t rssi, int8_t snr, bool ackReceived, uint16_t uplinkCounter, uint16_t downlinkCounter);
 
 /**
- * @fn txHander
+ * @fn txCB
  * @brief The callback function after the node sends data.
  * @details The user-defined data transmission callback function can obtain actual transmission power and other network parameters.
  * @param isconfirm Whether it is an acknowledgment packet
@@ -64,63 +64,7 @@ typedef void (*rxHander)(void *buffer, uint16_t size, uint8_t port, int16_t rssi
  * @param Channel Transmission channel
  * @return None
  */
-typedef void (*txHander)(bool isconfirm, int8_t datarate, int8_t TxEirp, uint8_t Channel);
-
-/**
- * @fn buttonCallback
- * @brief Button interrupt callback function.
- * @details The user-defined button interrupt callback function can wake up the node in low-power mode.
- * @param None
- * @return None
- */
-typedef void (*buttonCallback)(void);
-
-/**
- * @fn sleepstateCallback
- * @brief Timer callback function.
- * @details The user-defined timer callback function: in low-power mode, the node will enter sleep after starting the timer, 
- *          and this callback will be executed after the timer wakes up the node.
- * @param None
- * @return None
- */
-typedef void (*sleepstateCallback)(void);
-
-/**
- * @enum eMcuSleepMode_t
- * @brief Indicates whether the MCU's operating mode is normal mode or low-power mode.
- * @details In low-power mode, the node enters sleep after the timer is started, wakes up after the set timer duration, 
- *          and executes the timer callback function.
- */
-typedef enum
-{
-    MCU_ACTIVE,         /**< Normal mode */
-    MCU_DEEP_SLEEP,     /**< Low-power mode */
-} eMcuSleepMode_t;
-
-/**
- * @enum eLoRaState_t
- * @brief Indicates the status of LoRaWAN communication in low-power mode.
- * @details In low-power mode, the node is in the LORA_NEXTTRANS state when it needs to send data, in the LORA_IDLE state 
- *          after sending data, and in the LORA_EXITINT state when pausing data transmission to handle button events.
- */
-typedef enum
-{
-    LORA_IDLE,          /**< Idle state */
-    LORA_EXITINT,       /**< Pause data transmission to handle button events */
-    LORA_NEXTTRANS,     /**< The node is preparing to send data */
-} eLoRaState_t;
-
-/**
- * @struct sLoRaAPPHandle_t
- * @brief Indicates the management of LoRaWAN communication and timer operations in low-power mode.
- */
-typedef struct
-{
-    eLoRaState_t lorastate;               /**< The status of LoRaWAN communication */
-    long sleepMS;                         /**< MCU sleep time (low-power mode timer duration) */
-    sleepstateCallback sleepstateCB;      /**< Low-power mode timer callback function */
-} sLoRaAPPHandle_t;
-
+typedef void (*txCB)(bool isconfirm, int8_t datarate, int8_t TxEirp, uint8_t Channel);
 
 class LoRaWAN_Node
 {
@@ -180,14 +124,14 @@ public:
     int join(joinCallback callback);
 
     /**
-     * @fn isNetworkJoined
+     * @fn isJoined
      * @brief Determine whether the node has joined the LoRaWAN network.
      * @param None
      * @return Whether the node has joined the LoRaWAN network
      * @retval true Already joined the network
      * @retval false Not yet joined the network
      */
-    bool isNetworkJoined();
+    bool isJoined();
 
     /**
      * @fn getNetID
@@ -214,12 +158,12 @@ public:
     uint8_t getDataRate();
 
     /**
-     * @fn getTxEirp
+     * @fn getEIRP
      * @brief Get the node's equivalent isotropically radiated power(dBm)
      * @param None
      * @return Equivalent isotropically radiated power(dBm)
      */
-    uint8_t getTxEirp();
+    uint8_t getEIRP();
 
     /**
      * @fn getNwkSKey
@@ -254,43 +198,32 @@ public:
     uint32_t getLastDownCounter();
 
     /**
-     * @fn setSleepMode
-     * @brief Set the MCU's operating mode.
-     * @param mcusleepmode MCU operating mode, which can be either MCU_ACTIVE or MCU_DEEP_SLEEP
-     * @n MCU_ACTIVE Normal mode
-     * @n MCU_DEEP_SLEEP Low power mode, in this mode the node enters sleep after the timer starts, 
-     *    wakes up after the set timer duration, and executes the timer callback function
-     * @return None
-     */
-    void setSleepMode(eMcuSleepMode_t mcusleepmode);
-
-    /**
-     * @fn sleepMs
+     * @fn deepSleepMs
      * @brief Set the MCU to immediately enter sleep for a specified duration.
-     * @param timesleep Node sleep duration(ms)
+     * @param timesleep Node sleep duration(ms).If set to 0, the device will never wake up.
      * @return None
      */
-    void sleepMs(uint32_t timesleep);
+    void deepSleepMs(uint32_t timesleep);
 
     /**
-     * @fn setRxHander
+     * @fn setRxCB
      * @brief Set the user-defined callback function for when the node receives data.
      * @param callback User-defined data reception callback function, of type rxHandler
      * @return Set result
      * @retval true Set successful
      * @retval false Set failed, please check if callback is NULL
      */
-    bool setRxHander(rxHander callback);
+    bool setRxCB(rxCB callback);
 
     /**
-     * @fn setTxHander
+     * @fn setTxCB
      * @brief Set the user-defined callback function for when the node sends data.
      * @param callback User-defined data transmission callback function, of type txHandler
      * @return Set result
      * @retval true Set successful
      * @retval false Set failed, please check if callback is NULL
      */
-    bool setTxHander(txHander callback);
+    bool setTxCB(txCB callback);
     
     /**
      * @fn sendConfirmedPacket
@@ -315,46 +248,27 @@ public:
      * @retval false Send failed
      */
     bool sendUnconfirmedPacket(uint8_t port, void *buffer, uint8_t size);
+
+    /**
+     * @fn setSubBand
+     * @brief Set the frequency band for the US915 regional node.
+     * @param subBand US915 region sub-band number (1–8, Default: 2).
+     * @n The sub-band numbers correspond to channels. For specific frequency details of each channel, 
+     *    refer to: ​​DFRobot_LoRaWAN\CHANNELS.MD
+     * @n SubBand 1: channel 0-7, 64
+     * @n SubBand 2: channel 8-15, 65
+     * @n SubBand 3: channel 16-23, 66
+     * @n SubBand 4: channel 24-31, 67
+     * @n SubBand 5: channel 32-39, 68
+     * @n SubBand 6: channel 40-47, 69
+     * @n SubBand 7: channel 48-55, 70
+     * @n SubBand 8: channel 56-63, 71
+     * @return Whether the sub-band configuration was successful
+     * @retval true Set successful
+     * @retval false Set failed
+     */
+    bool setSubBand(uint8_t subBand);
     
-    /**
-     * @fn TimerInit
-     * @brief Node timer initialization function; in low power mode, the timer callback function will execute after the MCU wakes up.
-     * @param obj Timer object
-     * @param callback Timer callback function
-     * @return None
-     */
-    void TimerInit(TimerEvent_t *obj, void (*callback)(void));
-
-    /**
-     * @fn TimerValue
-     * @brief Node timer timeout setting function; in low power mode, the value parameter represents the MCU's sleep duration.
-     * @param obj Timer object
-     * @param value Timer timeout duration, which in sleep mode corresponds to the node's sleep duration(ms)
-     * @return None
-     */
-    void TimerValue(TimerEvent_t *obj, uint32_t value);
-
-    /**
-     * @fn TimerStart
-     * @brief Node timer start function; in low power mode, the MCU immediately enters sleep after calling this function.
-     * @param obj Timer object
-     * @return None
-     */
-    void TimerStart(TimerEvent_t *obj);
-
-    /**
-     * @fn attachInterrupt
-     * @brief Node button interrupt callback binding function.
-     * @details In low power mode, pressing the button can wake the MCU from sleep mode and execute the user-defined button interrupt callback.
-     * @param pin Button pin number, which must be connected to an interrupt capable of waking the MCU
-     * @param cb User-defined button interrupt callback function, of type buttonCallback
-     * @param mode Trigger mode, which can be LOW or HIGH
-     * @n LOW Trigger on LOW level
-     * @n HIGH Trigger on HIGH level
-     * @return None
-     */
-    void attachInterrupt(uint8_t pin, buttonCallback cb, int mode);
-
     /**
      * @fn addChannel
      * @brief This method is not available.
@@ -367,17 +281,7 @@ public:
      */
     bool delChannel(uint32_t freq);
 
-    /**
-     * @fn setMaxReJoinTimes
-     * @brief This method is not available.
-     */
-    bool setMaxReJoinTimes(uint8_t maxtimes);
 
-    /**
-     * @fn setSubBand
-     * @brief This method is not available.
-     */
-    bool setSubBand(uint8_t subBand);
 
 private:
 

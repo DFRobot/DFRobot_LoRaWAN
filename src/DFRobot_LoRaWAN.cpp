@@ -7,7 +7,7 @@
  *@version V0.0.1
  *@date 2025-1-17
  *@get from https://www.dfrobot.com
- *@url https://gitee.com/dfrobotcd/lorawan-esp32-sdk
+ *@url https://github.com/DFRobot/DFRobot_LoRaWAN
  */
 #include <Arduino.h>
 #include "DFRobot_LoRaWAN.h"
@@ -28,21 +28,13 @@ TaskHandle_t loraTaskHandle;
 
 // 定义回调函数变量
 static joinCallback loraJoinCb = NULL;
-static rxHander rxCb = NULL;
-static txHander txCb = NULL;
-static buttonCallback btCb = NULL;
+static rxCB rxCb = NULL;
+static txCB txCb = NULL;
 
 // 频道掩码相关变量，存放到非易失RTC缓存
 RTC_DATA_ATTR uint16_t ChannelsMask[6];
 RTC_DATA_ATTR uint16_t ChannelsDefaultMask[6];
 RTC_DATA_ATTR uint16_t ChannelsMaskRemaining[6];
-
-// lora应用层接口 和 esp32睡眠模式
-RTC_DATA_ATTR sLoRaAPPHandle_t loraApphandle;
-RTC_DATA_ATTR eMcuSleepMode_t mcusleepmode = MCU_ACTIVE;
-
-RTC_DATA_ATTR uint8_t ReJoinTimesMax = 5;   // 最大重复入网次数     停用
-RTC_DATA_ATTR uint8_t CurReJoinTimes = 0;   // 当前重复入网次数
 
 // 地区条件编译，从Arduino IDE中地区选项卡里设置
 #ifdef REGION_EU868
@@ -153,17 +145,7 @@ static void OnMacMlmeRequest( LoRaMacStatus_t status, MlmeReq_t *mlmeReq, TimerT
             printf("\n\n-----------OTAA Send JOIN Req FAIL!------------\n\n");
             if (loraJoinCb != NULL) 
             { 
-                CurReJoinTimes++; 
-                loraJoinCb(false, 0, 0); 
-                if(mcusleepmode == MCU_DEEP_SLEEP)              // 睡眠模式重传避退入网机制
-                {
-                    // printf("\n\n------CurReJoinTimes = %d------\n\n", CurReJoinTimes);
-                    uint64_t backoff_time_ms = 5000 * (1ULL << (CurReJoinTimes - 1));           // 计算退避时间  每次是上次的2倍
-                    backoff_time_ms = (backoff_time_ms > 300000) ? 300000 : backoff_time_ms;    // 限制最大值
-                    esp_sleep_enable_timer_wakeup(backoff_time_ms * 1000ULL);                   // 转换为微秒
-                    printf("\n\n------[API JOINFAIL] ESP32 Enter DeepSleep!------\n\n");
-                    startDeepSleep();
-                }                               
+                loraJoinCb(false, 0, 0);                               
             }
         }
     }
@@ -187,7 +169,7 @@ static void OnJoinRequest( LmHandlerJoinParams_t* params )
         if( params->Status == LORAMAC_HANDLER_SUCCESS )
         {
             printf("\n\n-----------OTAA SUCCESS!----------\n\n");
-            if (loraJoinCb != NULL) {CurReJoinTimes = 0; loraJoinCb(true, rssi, snr); }
+            if (loraJoinCb != NULL) { loraJoinCb(true, rssi, snr); }
 
         }
         else                    
@@ -195,17 +177,8 @@ static void OnJoinRequest( LmHandlerJoinParams_t* params )
             printf("\n\n-----------OTAA JOIN FAIL!------------\n\n");
             if (loraJoinCb != NULL) 
             { 
-                CurReJoinTimes++; 
-                loraJoinCb(false, rssi, snr);
-                if(mcusleepmode == MCU_DEEP_SLEEP)              // 睡眠模式重传避退入网机制
-                {
-                    // printf("\n\n------CurReJoinTimes = %d------\n\n", CurReJoinTimes);
-                    uint64_t backoff_time_ms = 5000 * (1ULL << (CurReJoinTimes - 1));
-                    backoff_time_ms = (backoff_time_ms > 300000) ? 300000 : backoff_time_ms;
-                    esp_sleep_enable_timer_wakeup(backoff_time_ms * 1000ULL);
-                    printf("\n\n------[API JOINFAIL] ESP32 Enter DeepSleep!------\n\n");
-                    startDeepSleep();
-                }     
+                
+                loraJoinCb(false, rssi, snr);    
             }
 
         }
@@ -214,7 +187,9 @@ static void OnJoinRequest( LmHandlerJoinParams_t* params )
     else   // ABP入网通知
     {
         printf("\n\n-----------ABP SUCCESS!------------\n\n");
-        if (loraJoinCb != NULL) {CurReJoinTimes = 0; loraJoinCb(true, rssi, snr); }
+        if (loraJoinCb != NULL) {
+            loraJoinCb(true, rssi, snr); 
+        }
 
     }
 
@@ -296,105 +271,12 @@ bool taskLoad(void)
     return true;
 }
 
-void powerStateHandle(void *pvParameters)
-{
-    // printf("LoRa Task started\n");
-
-    while (1)
-    {
-
-        if (xSemaphoreTake(loraStateSem, portMAX_DELAY) == pdTRUE)
-        {
-
-            switch (loraApphandle.lorastate)
-            {
-            case LORA_IDLE: // 空闲
-            {
-                break;
-            }
-            case LORA_NEXTTRANS: // 准备下一次传输
-            {
-                if (mcusleepmode != MCU_ACTIVE)
-                {
-                    printf("LORA_NEXTTRANS\n");
-                    if (loraApphandle.sleepstateCB != NULL)
-                    {
-                        loraApphandle.sleepstateCB();
-                        loraApphandle.lorastate = LORA_IDLE;
-                    }
-                }
-                break;
-            }
-            case LORA_EXITINT: // 按钮处理
-            {
-                printf("LORA_EXITINT\n");
-                btCb();
-                break;
-            }
-            }
-        }
-    }
-}
-
-const char* wakeup_reason_strings[] = 
-{
-    "ESP_SLEEP_WAKEUP_UNDEFINED",
-    "ESP_SLEEP_WAKEUP_ALL",
-    "ESP_SLEEP_WAKEUP_EXT0",
-    "ESP_SLEEP_WAKEUP_EXT1",
-    "ESP_SLEEP_WAKEUP_TIMER",
-    "ESP_SLEEP_WAKEUP_TOUCHPAD",
-    "ESP_SLEEP_WAKEUP_ULP",
-    "ESP_SLEEP_WAKEUP_GPIO",
-    "ESP_SLEEP_WAKEUP_UART",
-    "ESP_SLEEP_WAKEUP_WIFI",
-    "ESP_SLEEP_WAKEUP_COCPU",
-    "ESP_SLEEP_WAKEUP_COCPU_TRAP_TRIG",
-    "ESP_SLEEP_WAKEUP_BT"
-};
-
-bool lowPowerTask()
-{
-    // Create the LoRaWan event semaphore
-    esp_sleep_wakeup_cause_t wakeup_reason;
-
-    loraStateSem = xSemaphoreCreateBinary();
-    xSemaphoreGive(loraStateSem);
-    xSemaphoreTake(loraStateSem, 10);
-    wakeup_reason = esp_sleep_get_wakeup_cause();
-    if (wakeup_reason >= ESP_SLEEP_WAKEUP_UNDEFINED && wakeup_reason <= ESP_SLEEP_WAKEUP_BT) 
-    {
-        printf("\n\n------Wakeup reason: [%s]------\n\n", wakeup_reason_strings[wakeup_reason]);
-    } 
-    else 
-    {
-        printf("\n\n------Wakeup reason: [UNKNOWN]------\n\n");
-    }
-
-    if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0)
-    {
-        // xSemaphoreGive(loraStateSem);
-        loraApphandle.lorastate = LORA_EXITINT;
-    }
-    
-    if (!xTaskCreate(powerStateHandle, "LORA", 8192, NULL, 5, &loraTaskHandle))
-    {
-        return false;
-    }
-    return true;
-}
-
-void exitBtnInt(void)
-{
-    loraApphandle.lorastate = LORA_EXITINT;
-    xSemaphoreGive(loraStateSem);
-}
-
 static void startDeepSleep( void )
 {
     SX126xIOInit();    // 预防用户没有初始化
     Radio.Standby();   // 容错
     Radio.Sleep();
+    SetMacState(0);
     pinMode(LORA_SS, OUTPUT);
     digitalWrite(LORA_SS, HIGH);
     rtc_gpio_hold_en(gpio_num_t(LORA_SS));
@@ -410,7 +292,6 @@ LoRaWAN_Node::LoRaWAN_Node(const uint8_t *devEui, const uint8_t *appEui, const u
     memcpy(LmHandlerParams.AppKey, appKey, 16);
     LmHandlerParams.joinType = ACTIVATION_TYPE_OTAA;
     LmHandlerParams.Class = classType;
-    loraApphandle.lorastate = LORA_NEXTTRANS;
 }
 
 LoRaWAN_Node::LoRaWAN_Node(const uint32_t devAddr, const uint8_t *nwkSKey, const uint8_t *appSKey, DeviceClass_t classType)
@@ -420,7 +301,6 @@ LoRaWAN_Node::LoRaWAN_Node(const uint32_t devAddr, const uint8_t *nwkSKey, const
     LmHandlerParams.DevAddr = devAddr;
     LmHandlerParams.joinType = ACTIVATION_TYPE_ABP;
     LmHandlerParams.Class = classType;
-    loraApphandle.lorastate = LORA_NEXTTRANS;
 }
 
 bool LoRaWAN_Node::init(int8_t dataRate, int8_t txEirp, bool adr, bool dutyCycle)
@@ -439,9 +319,8 @@ bool LoRaWAN_Node::init(int8_t dataRate, int8_t txEirp, bool adr, bool dutyCycle
 
     // lora任务创建
     taskLoad();
-    lowPowerTask();
 
-    // printf("\n\n\n--------LoRaWAN_Node::init   isNetworkJoined= %d--------------\n\n", isNetworkJoined());
+    // printf("\n\n\n--------LoRaWAN_Node::init   isJoined= %d--------------\n\n", isJoined());
 
     // 新 - 协议栈初始化
     LmHandlerParams.TxDatarate = dataRate;
@@ -472,73 +351,17 @@ bool LoRaWAN_Node::init(int8_t dataRate, int8_t txEirp, bool adr, bool dutyCycle
     }    
 }
 
-void LoRaWAN_Node::setSleepMode(eMcuSleepMode_t mode)
+void LoRaWAN_Node::deepSleepMs(uint32_t timesleep)
 {
-    mcusleepmode = mode;
-}
-
-void LoRaWAN_Node::TimerInit(TimerEvent_t *obj, void (*callback)(void))
-{
-    if (mcusleepmode == MCU_ACTIVE)
-    {
-        // ets_printf("TimerInit\n");
-        ::TimerInit(obj, callback);
+    if(timesleep != 0){
+        // esp32进入指定睡眠时间，为0则不用定时器唤醒
+        esp_sleep_enable_timer_wakeup(timesleep * (uint64_t)1000);
     }
-    else
-    {
-        loraApphandle.sleepstateCB = callback;
-    }
-}
-
-void LoRaWAN_Node::TimerValue(TimerEvent_t *obj, uint32_t value)
-{
-    if (mcusleepmode == MCU_ACTIVE)
-    {
-        // ets_printf("TimerSetValue\n");
-        ::TimerSetValue(obj, value);
-    }
-    else
-    {
-        loraApphandle.sleepMS = value;
-    }
-}
-
-void LoRaWAN_Node::TimerStart(TimerEvent_t *obj)
-{
-    if (mcusleepmode == MCU_ACTIVE)
-    {
-        // ets_printf("TimerStart\n");
-        ::TimerStart(obj);
-    }
-    else
-    {
-        // xSemaphoreGive(loraStateSem);
-        loraApphandle.lorastate = LORA_NEXTTRANS;
-        esp_sleep_enable_timer_wakeup(loraApphandle.sleepMS * (uint64_t)1000);
-        printf("\n\n------[API TimerStart] ESP32 Enter DeepSleep!------\n\n");
-        startDeepSleep();
-    }
-}
-
-void LoRaWAN_Node::attachInterrupt(uint8_t pin, buttonCallback cb, int mode)
-{
-    btCb = cb;
-    esp_sleep_enable_ext0_wakeup((gpio_num_t)pin, mode);
-    // Configure Touchpad as wakeup source
-    // esp_sleep_enable_touchpad_wakeup();
-    rtc_gpio_pullup_en((gpio_num_t)pin);
-    ::attachInterrupt(pin, exitBtnInt, mode);
-}
-
-void LoRaWAN_Node::sleepMs(uint32_t timesleep)
-{
-    // esp32进入指定睡眠时间
-    esp_sleep_enable_timer_wakeup(timesleep * (uint64_t)1000);
-    printf("\n\n------[API sleepMs] ESP32 Enter DeepSleep!------\n\n");
+    printf("\n\n------[API deepSleepMs] ESP32 Enter DeepSleep!------\n\n");
     startDeepSleep();
 }
 
-bool LoRaWAN_Node::setRxHander(rxHander callback)
+bool LoRaWAN_Node::setRxCB(rxCB callback)
 {
     if(callback != NULL)
     {
@@ -548,7 +371,7 @@ bool LoRaWAN_Node::setRxHander(rxHander callback)
     return false;
 }
 
-bool LoRaWAN_Node::setTxHander(txHander callback)
+bool LoRaWAN_Node::setTxCB(txCB callback)
 {
     if(callback != NULL)
     {
@@ -558,7 +381,7 @@ bool LoRaWAN_Node::setTxHander(txHander callback)
     return false;
 }
 
-bool LoRaWAN_Node::isNetworkJoined()
+bool LoRaWAN_Node::isJoined()
 {
     MibRequestConfirm_t mibreq; // 升级1.0.3
     mibreq.Type = MIB_NETWORK_ACTIVATION;
@@ -576,6 +399,9 @@ bool LoRaWAN_Node::isNetworkJoined()
 
 bool LoRaWAN_Node::setSubBand(uint8_t subBand)
 {
+    if(subBand < 1 || subBand > 8){
+        return false;
+    }
     uint16_t subBandChannelMask[6] = {0}, maxMask = 0;
     MibRequestConfirm_t mibreq;
     mibreq.Type = MIB_NVM_CTXS;
@@ -585,8 +411,7 @@ bool LoRaWAN_Node::setSubBand(uint8_t subBand)
     {
     case LORAMAC_REGION_CN470:
         maxMask = 6;
-        if (subBand > 12) 
-        {
+        if (subBand > 12) {
             return false;
         }
         subBandChannelMask[(subBand - 1) / 2] = ((subBand - 1) % 2) ? 0xFF00 : 0x00FF;
@@ -595,13 +420,11 @@ bool LoRaWAN_Node::setSubBand(uint8_t subBand)
     case LORAMAC_REGION_AU915: // same as US915
     case LORAMAC_REGION_US915:
         maxMask = 6;
-        if (subBand > 8) 
-        {
+        if (subBand > 8) {
             return false;
         }
         subBandChannelMask[(subBand - 1) / 2] = ((subBand - 1) % 2) ? 0xFF00 : 0x00FF;
         subBandChannelMask[4]                 = 1 << (subBand - 1);
-        // set DR4 channel mask before getting CFList, for adn use.
         break;
     default:
         return false;
@@ -667,7 +490,7 @@ bool LoRaWAN_Node::sendConfirmedPacket(uint8_t port, void *buffer, uint8_t size)
         // printf("-----------LoRaMacMcpsRequest LORAMAC_STATUS_OK------------\n");
         return true;
     }
-    printf("-----------LoRaMacMcpsRequest ERROR code = %d------------\n", status);
+    // printf("-----------LoRaMacMcpsRequest ERROR code = %d------------\n", status);
 // printf("-----------LoRaWAN_Node::sendConfirmedPacket 3 step------------\n");
     return false;
 }
@@ -707,17 +530,9 @@ int LoRaWAN_Node::join(joinCallback callback)
 {
     loraJoinCb = callback;
 
-    if (isNetworkJoined())
-    {
-        xSemaphoreGive(loraStateSem);
+    if (isJoined()) {
         return 0;
     }   
-
-    // if(CurReJoinTimes > ReJoinTimesMax && mcusleepmode == MCU_DEEP_SLEEP)  // 若超过最大失败次数且是低功耗模式
-    // {
-    //     printf("\n\n------[Join Fail Max] ESP32 Enter DeepSleep!------\n\n");
-    //     startDeepSleep();
-    // }
 
     // 新入网逻辑
     LmHandlerJoin();
@@ -743,7 +558,7 @@ uint8_t LoRaWAN_Node::getDataRate()
     return mibReq.Param.ChannelsDatarate;
 }
 
-uint8_t LoRaWAN_Node::getTxEirp()
+uint8_t LoRaWAN_Node::getEIRP()
 {
     MibRequestConfirm_t mibReq;
     mibReq.Type = MIB_CHANNELS_TX_POWER;
@@ -768,26 +583,17 @@ bool LoRaWAN_Node::addChannel(uint32_t freq)
     uint8_t chanIdx = 0;
     uint8_t i = 0;
     uint8_t j = 0;
-    for (uint8_t k = 0; k < 96; k++)
-    {
-
-        if (((ChannelsMask[i] >> j) & 0x01) == 0x01)
-        {
+    for (uint8_t k = 0; k < 96; k++) {
+        if (((ChannelsMask[i] >> j) & 0x01) == 0x01) {
             id++;
-        }
-        else
-        {
+        } else {
             chanIdx = id;
             break;
         }
-
-        if (j == 15)
-        {
+        if (j == 15) {
             j = 0;
             i++;
-        }
-        else
-        {
+        } else {
             j++;
         }
     }
@@ -807,8 +613,7 @@ bool LoRaWAN_Node::addChannel(uint32_t freq)
     channelAdd.ChannelId = chanIdx;
     printf("id = %d\n", chanIdx);
 #ifdef REGION_EU868
-    if (RegionEU868ChannelAdd(&channelAdd) == LORAMAC_STATUS_OK)
-    {
+    if (RegionEU868ChannelAdd(&channelAdd) == LORAMAC_STATUS_OK) {
         return true;
     }
 #endif
@@ -818,16 +623,12 @@ bool LoRaWAN_Node::addChannel(uint32_t freq)
 bool LoRaWAN_Node::delChannel(uint32_t freq)
 {
     ChannelRemoveParams_t channelRemove;
-
 #ifdef REGION_EU868
     channelRemove.ChannelId = getEU868FrqID(freq);
-
-    if (RegionEU868ChannelsRemove(&channelRemove) == LORAMAC_STATUS_OK)
-    {
+    if (RegionEU868ChannelsRemove(&channelRemove) == LORAMAC_STATUS_OK) {
         return true;
     }
 #endif
-
     return false;
 }
 
@@ -847,8 +648,7 @@ uint8_t *LoRaWAN_Node::getAppSKey()
         printf("\nGet Appskey Fail!\n");
         return nullptr;
     }
-    return appskey;
-    
+    return appskey;    
 }
 
 uint8_t *LoRaWAN_Node::getNwkSKey()
@@ -870,16 +670,4 @@ uint32_t LoRaWAN_Node::getLastUplinkCounter()
 uint32_t LoRaWAN_Node::getLastDownCounter()
 {
     return GetDownlinkCounter();
-}
-
-// 设置最大重复入网次数
-bool LoRaWAN_Node::setMaxReJoinTimes(uint8_t maxtimes)
-{
-    if(maxtimes > 0 && maxtimes < 255)
-    {
-        ReJoinTimesMax = maxtimes;
-        return true;
-    }
-    ReJoinTimesMax = 5;
-    return false;
 }

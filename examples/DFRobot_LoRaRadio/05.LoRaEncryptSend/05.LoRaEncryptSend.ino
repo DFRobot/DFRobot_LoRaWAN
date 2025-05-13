@@ -7,10 +7,7 @@
  *@author [Martin](Martin@dfrobot.com)
  *@version V0.0.1
  *@date 2025-3-14
- *@wiki en:https://wiki.dfrobot.com/lorawan
- *@wiki cn:https://wiki.dfrobot.com.cn/lorawan
- *@get from https://www.dfrobot.com
- *@url https://gitee.com/dfrobotcd/lorawan-esp32-sdk
+ *@url https://github.com/DFRobot/DFRobot_LoRaWAN
  */
 #include "DFRobot_LoRaRadio.h"
 
@@ -34,10 +31,12 @@ DFRobot_LoRaRadio radio;
 const uint8_t encryptKey[16] = {0x12,0x12,0x12,0x12,0x12,0x12,0x12,0x12,
                                 0x12,0x12,0x12,0x12,0x12,0x12,0x12,0x12};
 uint8_t buffer[4] = {1, 2, 3, 4};
+static uint32_t counter = 1;
 
 // Transmission complete callback function
 void loraTxDone(void)
 {
+    counter++;
     printf("-------------------------LoRa Tx done-----------------------------\n");
 }
 
@@ -47,15 +46,14 @@ void setup()
     delay(5000);            // Open the serial port within 5 seconds after uploading to view full print output
     radio.init();           // Initialize the LoRa node with a default bandwidth of 125 KHz 
     radio.setEncryptKey(encryptKey);                    // Set the communication key
-    radio.setTxCallback(loraTxDone);                    // Set the transmission complete callback function
-    radio.setFrequency(RF_FREQUENCY);                   // Set the communication frequency
-    radio.setTxEirp(TX_EIRP);                           // Set the Tx Eirp
-    radio.setSpreadingFactor(LORA_SPREADING_FACTOR);    // Set the spreading factor
+    radio.setTxCB(loraTxDone);                    // Set the transmission complete callback function
+    radio.setFreq(RF_FREQUENCY);                   // Set the communication frequency
+    radio.setEIRP(TX_EIRP);                           // Set the Tx Eirp
+    radio.setSF(LORA_SPREADING_FACTOR);    // Set the spreading factor
 }
 
 void loop()
-{
-    static uint32_t counter = 1;
+{    
     printf("statistics: send %d Encrypt packet\n", counter); // Print the prompt message
 
     radio.sendData(buffer, /*size=*/4); // Send data
