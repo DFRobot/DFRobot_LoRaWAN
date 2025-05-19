@@ -167,9 +167,14 @@ void DFRobot_LoRaRadio::setRxCB(rxCB cb)
     reInitEvent(&radioEvent);
 }
 
-void DFRobot_LoRaRadio::startRx(uint32_t timeout)
+void DFRobot_LoRaRadio::startRx()
 { 
-    Radio2.Rx(timeout);
+    Radio2.Rx(0xFFFFFF);
+}
+
+void DFRobot_LoRaRadio::stopRx()
+{
+    Radio2.Standby();
 }
 
 void DFRobot_LoRaRadio::setCadCB(cadDoneCB cb)
@@ -181,12 +186,6 @@ void DFRobot_LoRaRadio::setCadCB(cadDoneCB cb)
 void DFRobot_LoRaRadio::setRxErrorCB(rxErrorCB cb)
 {
     radioEvent.RxError  = cb;
-    reInitEvent(&radioEvent);
-}
-
-void DFRobot_LoRaRadio::setRxTimeOutCB(rxTimeOutCB cb)
-{
-    radioEvent.RxTimeout  = cb;
     reInitEvent(&radioEvent);
 }
 

@@ -67,12 +67,6 @@ typedef void rxCB(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr);
 typedef void cadDoneCB(bool cadResult);
 
 /**
- * @fn rxTimeOutCB
- * @brief Callback function for when data reception times out.
- */
-typedef void rxTimeOutCB(void);
-
-/**
  * @fn rxErrorCB
  * @brief Callback function for when data reception encounters an error.
  */
@@ -85,155 +79,155 @@ class DFRobot_LoRaRadio
 {
 
 public:
-    /**
-     * @fn DFRobot_LoRaRadio
-     * @brief Constructor for the DFRobot_LoRaRadio class.
-     * @return LoRaRadio node object
-     */
-    DFRobot_LoRaRadio();
 
-    /**
-     * @fn init
-     * @brief Initializes the LoRa radio module.
-     * @return None
-     */
-    void init();
+      /**
+       * @fn DFRobot_LoRaRadio
+       * @brief Constructor for the DFRobot_LoRaRadio class.
+       * @return LoRaRadio node object
+       */
+      DFRobot_LoRaRadio();
 
-    /**
-     * @fn setEIRP
-     * @brief Sets the transmission power of the LoRa radio module.
-     * @param EIRP Equivalent Isotropically Radiated Power(dBm)
-     * @return None
-     */
-    void setEIRP(int8_t EIRP);
+      /**
+       * @fn init
+       * @brief Initializes the LoRa radio module.
+       * @return None
+       */
+      void init();
 
-    /**
-     * @fn setSF
-     * @brief Set the spreading factor of the radio.
-     * @param SF The spreading factor to set (unsigned 8-bit integer).
-     * @return None
-     */
-    void setSF(uint8_t SF);
+      /**
+       * @fn setEIRP
+       * @brief Sets the transmission power of the LoRa radio module.
+       * @param EIRP Equivalent Isotropically Radiated Power(dBm)
+       * @return None
+       */
+      void setEIRP(int8_t EIRP);
 
-    /**
-     * @fn setBW
-     * @brief Set the bandwidth of the radio.
-     * @param BW The bandwidth to set (enumeration type eBandwidths_t).
-     * @return None
-     */
-    void setBW(eBandwidths_t BW);
+      /**
+       * @fn setSF
+       * @brief Set the spreading factor of the radio.
+       * @param SF The spreading factor to set (unsigned 8-bit integer).
+       * @return None
+       */
+      void setSF(uint8_t SF);
 
-    /**
-     * @fn setFreq
-     * @brief Sets the frequency of the LoRa radio module.
-     * @param freq The frequency, in Hz.
-     * @return None
-     */
-    void setFreq(uint32_t freq);
+      /**
+       * @fn setBW
+       * @brief Set the bandwidth of the radio.
+       * @param BW The bandwidth to set (enumeration type eBandwidths_t).
+       * @return None
+       */
+      void setBW(eBandwidths_t BW);
 
-    /**
-     * @fn setTxCB
-     * @brief Sets the callback function for when data transmission is completed.
-     * @param cb The callback function.
-     * @return None
-     */
-    void setTxCB(txCB cb);
+      /**
+       * @fn setFreq
+       * @brief Sets the frequency of the LoRa radio module.
+       * @param freq The frequency, in Hz.
+       * @return None
+       */
+      void setFreq(uint32_t freq);
 
-    /**
-     * @fn sendData
-     * @brief Sends data using the LoRa radio module.
-     * @param data Pointer to the data to be sent.
-     * @param size The length of the data, in bytes.
-     * @return None
-     */
-    void sendData(const void *data, uint8_t size);
+      /**
+       * @fn setTxCB
+       * @brief Sets the callback function for when data transmission is completed.
+       * @param cb The callback function.
+       * @return None
+       */
+      void setTxCB(txCB cb);
 
-    /**
-     * @fn setRxCB
-     * @brief Sets the callback function for when data reception is completed.
-     * @param cb The callback function.
-     * @return None
-     */
-    void setRxCB(rxCB cb);
+      /**
+       * @fn sendData
+       * @brief Sends data using the LoRa radio module.
+       * @param data Pointer to the data to be sent.
+       * @param size The length of the data, in bytes.
+       * @return None
+       */
+      void sendData(const void *data, uint8_t size);
 
-    /**
-     * @fn setRxTimeOutCB
-     * @brief Sets the callback function for when data reception times out.
-     * @param cb The callback
-     * @return None
-     */
-     void setRxTimeOutCB(rxTimeOutCB cb);
+      /**
+       * @fn setRxCB
+       * @brief Sets the callback function for when data reception is completed.
+       * @param cb The callback function.
+       * @return None
+       */
+      void setRxCB(rxCB cb);
 
-     /**
-      * @fn setRxErrorCB
-      * @brief Sets the callback function for when data reception encounters an error.
-      * @param cb The callback function.
-      * @return None
-      */
-     void setRxErrorCB(rxErrorCB cb);
+      /**
+       * @fn setRxErrorCB
+       * @brief Sets the callback function for when data reception encounters an error.
+       * @param cb The callback function.
+       * @return None
+       */
+      void setRxErrorCB(rxErrorCB cb);
 
-     /**
-      * @fn startRx
-      * @brief Starts receiving data using the LoRa radio module.
-      * @param timeout The timeout, in milliseconds.
-      * @return None
-      */
-     void startRx(uint32_t timeout);
+      /**
+       * @fn startRx
+       * @brief Starts receiving data using the LoRa radio module.
+       * @return None
+       */
+      void startRx();
 
-     /**
-      * @fn setCadCB
-      * @brief Sets the callback function for when channel activity detection is completed.
-      * @param cb The callback function.
-      * @return None
-      */
-     void setCadCB(cadDoneCB cb);
+      /**
+       * @fn stopRx
+       * @brief LoRa radio module stops receiving data.
+       * @return None
+       */
+      void stopRx();
 
-     /**
-      * @fn startCad
-      * @brief Starts channel activity detection using the LoRa radio module.
-      * @param cadSymbolNum the number of symbols to be used for channel activity detection operation.
-      * @param cadDetPeak Peak detection threshold, Signals above this threshold are considered definite channel activity.
-      * @param cadDetMin Minimum detection threshold, Signals between cadDetMin and cadDetPeak trigger potential activity.
-      * @return None
-      */
-     void startCad(RadioLoRaCadSymbols_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin);
+      /**
+       * @fn setCadCB
+       * @brief Sets the callback function for when channel activity detection is completed.
+       * @param cb The callback function.
+       * @return None
+       */
+      void setCadCB(cadDoneCB cb);
 
-     /**
-      * @fn deepSleepMs
-      * @brief Set the MCU to immediately enter sleep for a specified duration.
-      * @param timesleep Node sleep duration(ms).If set to 0, the device will never wake up.
-      * @return None
-      */
-     void deepSleepMs(uint32_t timesleep);
-     
-     /**
-      * @fn setEncryptKey
-      * @brief Set the encryption key for the radio.
-      * @param key Pointer to the encryption key (unsigned 8-bit integer array).
-      * @return None
-      */
-     void setEncryptKey(const uint8_t *key);
+      /**
+       * @fn startCad
+       * @brief Starts channel activity detection using the LoRa radio module.
+       * @param cadSymbolNum the number of symbols to be used for channel activity detection operation.
+       * @param cadDetPeak Peak detection threshold, Signals above this threshold are considered definite channel activity.
+       * @param cadDetMin Minimum detection threshold, Signals between cadDetMin and cadDetPeak trigger potential activity.
+       * @return None
+       */
+      void startCad(RadioLoRaCadSymbols_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin);
 
-     /**
-      * @fn dumpRegisters
-      * @brief Dump the registers of the radio.
-      * @n This function prints the current values of all the registers of the radio to the output (serial monitor)
-      * @return None
-      */
-     void dumpRegisters();
+      /**
+       * @fn deepSleepMs
+       * @brief Set the MCU to immediately enter sleep for a specified duration.
+       * @param timesleep Node sleep duration(ms).If set to 0, the device will never wake up.
+       * @return None
+       */
+      void deepSleepMs(uint32_t timesleep);
 
-     /**
-     * @fn setSync
-     * @brief This method is not available.
-     * @return None
-     */
-    void setSync(uint16_t sync);
+      /**
+       * @fn setEncryptKey
+       * @brief Set the encryption key for the radio.
+       * @param key Pointer to the encryption key (unsigned 8-bit integer array).
+       * @return None
+       */
+      void setEncryptKey(const uint8_t *key);
 
-     private:
-     eBandwidths_t _bandwidth = BW_125; /**< The bandwidth of the LoRa radio module. */
-     uint8_t _txeirp = 16;
-     uint8_t _SF = 7;
-     protected:
+      /**
+       * @fn dumpRegisters
+       * @brief Dump the registers of the radio.
+       * @n This function prints the current values of all the registers of the radio to the output (serial monitor)
+       * @return None
+       */
+      void dumpRegisters();
+
+      /**
+       * @fn setSync
+       * @brief This method is not available.
+       * @return None
+       */
+      void setSync(uint16_t sync);
+
+      private:
+      eBandwidths_t _bandwidth = BW_125; /**< The bandwidth of the LoRa radio module. */
+      uint8_t _txeirp = 16;
+      uint8_t _SF = 7;
+      
+      protected:
      };
      
      #endif // DFRobot_LoraRadio_h

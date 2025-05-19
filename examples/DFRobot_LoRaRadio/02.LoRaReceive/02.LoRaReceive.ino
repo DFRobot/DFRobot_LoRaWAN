@@ -1,10 +1,8 @@
 /*!
  *@file LoRaReceive.ino
  *@brief Receive LoRa data from the air.
- *@details Receive LoRa data from the air and set a 10-second timeout. 
-           If no data is received within the timeout period,the interrupt
-           service function will be triggered to initiate reception again, 
-           with the timeout still set to 10 seconds.
+ *@details Receive LoRa messages with specified frequency, bandwidth, and spreading factor from the air.
+           print the received message data to the serial port.
  *@copyright Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  *@licence The MIT License (MIT)
  *@author [Martin](Martin@dfrobot.com)
@@ -71,32 +69,17 @@ void loraRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
     screen.printf("Recv %dst", ++counter);
     screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_2);
     screen.printf("packet");
-    radio.startRx(10 * 1000);
-}
-
-void loraRxTimeout(void)
-{
-    printf("LoRaRxTimeout\n");
-    radio.startRx(10 * 1000);    // Start receiving and set the receive timeout to 10s
-    screen.fillScreen(BG_COLOR);    
-    screen.setTextColor(TEXT_COLOR);
-    screen.setFont(TEXT_FONT);
-    screen.setTextSize(TEXT_SIZE);
-    screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_1);
-    screen.printf("LoRaRxTimeout");
 }
 
 void loraRxError(void)
 {
     printf("LoRaRxError\n");
-    radio.startRx(10 * 1000);    // Start receiving and set the receive timeout to 10s
     screen.fillScreen(BG_COLOR);    
     screen.setTextColor(TEXT_COLOR);
     screen.setFont(TEXT_FONT);
     screen.setTextSize(TEXT_SIZE);
     screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_1);
     screen.printf("LoRaRxError");
-
 }
 
 void setup()
@@ -116,16 +99,14 @@ void setup()
     screen.setCursor(POX_X, POX_Y + LINE_HEIGHT * LINE_1);
     screen.printf("LoRa Recv Test");
 
-    delay(5000);    // Open the serial port within 5 seconds after uploading to view full print output
-    radio.init();   // Initialize the LoRa node with a default bandwidth of 125 KHz
-    
+    delay(5000);                                  // Open the serial port within 5 seconds after uploading to view full print output
+    radio.init();                                 // Initialize the LoRa node with a default bandwidth of 125 KHz    
     radio.setRxCB(loraRxDone);                    // Set the receive complete callback function
-    radio.setRxTimeOutCB(loraRxTimeout);          // Set the receive timeout callback function
     radio.setRxErrorCB(loraRxError);              // Set the receive error callback function
     radio.setFreq(RF_FREQUENCY);                  // Set the communication frequency
     radio.setSF(LORA_SPREADING_FACTOR);           // Set the spreading factor
     radio.setBW(BW_125);                          // Set the bandwidth
-    radio.startRx(10 * 1000);                     // Start receiving and set the receive timeout to 10s
+    radio.startRx();                              // Start receiving
 }
 
 void loop()

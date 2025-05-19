@@ -114,7 +114,7 @@ void joinCb(bool isOk, int16_t rssi, int8_t snr)
         screen.printf("Snr = %d", snr);
         delay(5000);
 
-        userSendConfirmedPacket();  // Send data after successful network join        
+        node.deepSleepMs(APP_INTERVAL_MS);  // Deep sleep after successful network join        
 
     }else{
         printf("OTAA join error\n");

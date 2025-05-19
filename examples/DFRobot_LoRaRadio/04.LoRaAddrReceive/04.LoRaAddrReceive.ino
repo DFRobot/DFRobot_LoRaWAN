@@ -61,28 +61,20 @@ void loraRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
     printf("Message: %s\n" ,(char*)(payload + 4));
     printf("RSSI: %d\n" , rssi);
     printf("Snr: %d\n" , snr);
-    radio.startRx(10 * 1000);
-}
-
-void loraRxTimeout(void)
-{
-    printf("LoRaRxTimeout\n");
-    radio.startRx(10 * 1000);    // Start receiving and set the receive timeout to 10s
 }
 
 void setup()
 {
-    Serial.begin(115200);   // Initialize serial communication with a baud rate of 115200
+    Serial.begin(115200);                           // Initialize serial communication with a baud rate of 115200
     delay(5000);
     printf("localAddr = 0x%02x\n", localAddr);
     
-    radio.init();           // Initialize the LoRa node with a default bandwidth of 125 KHz
-    radio.setRxCB(loraRxDone);                    // Set the receive complete callback function
-    radio.setRxTimeOutCB(loraRxTimeout);          // Set the receive timeout callback function
-    radio.setFreq(RF_FREQUENCY);                   // Set the communication frequency
+    radio.init();                                   // Initialize the LoRa node with a default bandwidth of 125 KHz
+    radio.setRxCB(loraRxDone);                      // Set the receive complete callback function
+    radio.setFreq(RF_FREQUENCY);                    // Set the communication frequency
     radio.setEIRP(TX_EIRP);
     radio.setSF(LORA_SPREADING_FACTOR);
-    radio.startRx(10 * 1000);
+    radio.startRx();
 }
 
 void loop()

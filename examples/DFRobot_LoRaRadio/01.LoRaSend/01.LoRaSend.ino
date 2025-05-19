@@ -84,7 +84,7 @@ void setup()
 
     delay(5000);   // Open the serial port within 5 seconds after uploading to view full print output
     radio.init();  // Initialize the LoRa node with a default bandwidth of 125 KHz    
-    radio.setTxCB(loraTxDone);                 // Set the transmission complete callback function
+    radio.setTxCB(loraTxDone);                  // Set the transmission complete callback function
     radio.setFreq(RF_FREQUENCY);                // Set the communication frequency
     radio.setEIRP(TX_EIRP);                     // Set the Tx Eirp
     radio.setSF(LORA_SPREADING_FACTOR);         // Set the spreading factor
@@ -93,7 +93,7 @@ void setup()
 
 void loop()
 {
-    printf("statistics: send %d packet\n", ++counter); // Print the prompt message
-    radio.sendData(buffer, /*size=*/4);     // Send data
-    delay(3 * 1000);                        // Delay 3 seconds before sending next data
+    printf("statistics: send %d packet\n", ++counter);  // Print the prompt message
+    radio.sendData(buffer, /*size=*/4);                 // Send data
+    delay(3 * 1000);                                    // Delay 3 seconds before sending next data
 }

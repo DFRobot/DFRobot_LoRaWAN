@@ -1,10 +1,10 @@
 /*!
  *@file LoRaEncryptReceive.ino
  *@brief Receive encrypted LoRa data from the air and decrypt it.
- *@details Receive encrypted LoRa data from the air and set a 10-second timeout. 
-           If no data is received within the timeout, the interrupt service function 
-           will trigger to receive again for another 10 seconds. If data is received, 
-           decrypt it using the agreed key.
+ *@details Receive LoRa messages with specified frequency, bandwidth, and spreading factor from the air, 
+           decrypt them using a pre-agreed key, and print the decrypted message data to the serial port. 
+           Note that if no decryption key is set or the key does not match the sender's, the printed data 
+           will be encrypted.
  *@copyright Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  *@licence The MIT License (MIT)
  *@author [Martin](Martin@dfrobot.com)
@@ -44,23 +44,16 @@ void loraRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
     printf("0x%02x}\n\n", payload[i]);
 }
 
-void loraRxTimeout(void)
-{
-    printf("loraRxTimeout\n");
-    radio.startRx(10 * 1000);   // Start receiving and set the receive timeout to 10s
-}
-
 void setup()
 {
-    Serial.begin(115200);   // Initialize serial communication with a baud rate of 115200
-    delay(5000);            // Open the serial port within 5 seconds after uploading to view full print output
-    radio.init();           // Initialize the LoRa node with a default bandwidth of 125 KHz
-    radio.setEncryptKey(decryptKey);                    // Set the communication key
-    radio.setRxCB(loraRxDone);                    // Set the receive complete callback function
-    radio.setRxTimeOutCB(loraRxTimeout);          // Set the receive timeout callback function
-    radio.setFreq(RF_FREQUENCY);                   // Set the communication frequency
-    radio.setSF(LORA_SPREADING_FACTOR);    // Set the spreading factor
-    radio.startRx(10 * 1000);                           // Start receiving and set the receive timeout to 10s
+    Serial.begin(115200);                   // Initialize serial communication with a baud rate of 115200
+    delay(5000);                            // Open the serial port within 5 seconds after uploading to view full print output
+    radio.init();                           // Initialize the LoRa node with a default bandwidth of 125 KHz
+    radio.setEncryptKey(decryptKey);        // Set the communication key
+    radio.setRxCB(loraRxDone);              // Set the receive complete callback function
+    radio.setFreq(RF_FREQUENCY);            // Set the communication frequency
+    radio.setSF(LORA_SPREADING_FACTOR);     // Set the spreading factor
+    radio.startRx();                        // Start receiving
 }
 
 void loop()

@@ -207,7 +207,7 @@ void setup()
     }
     //node.init(DR_5, 16, /*adr = */false, /*dutyCycle =*/LORAWAN_DUTYCYCLE_OFF);
 #ifdef REGION_US915
-    setSubBand(2);
+    node.setSubBand(2);
 #endif
     TimerInit(&appTimer, userSendConfirmedPacket);  // Initialize timer event
     node.setTxCB(txCb);                             // Set the callback function for sending data

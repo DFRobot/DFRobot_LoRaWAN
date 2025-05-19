@@ -43,7 +43,7 @@ uint8_t noAck = 0;
 void loraTxDone(void)
 {
     printf("-------------------------LoRa Tx done-----------------------------\n");
-    radio.startRx(/*timeout=*/5000);    // Start receiving and set the receive timeout to 5s
+    radio.startRx();    // Start receiving
     noAck++;
     if(noAck > 5) printf("Transmission error\n");
 }
@@ -70,19 +70,20 @@ void loraRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
 
 void setup()
 {
-    Serial.begin(115200);   // Initialize serial communication with a baud rate of 115200
-    delay(5000);            // Open the serial port within 5 seconds after uploading to view full print output
-    radio.init();           // Initialize the LoRa node with a default bandwidth of 125 KHz
-    radio.setRxCB(loraRxDone);                    // Set the receive complete callback function
-    radio.setTxCB(loraTxDone);                    // Set the transmission complete callback function
-    radio.setFreq(RF_FREQUENCY);                   // Set the communication frequency
-    radio.setEIRP(TX_EIRP);                           // Set the Tx Eirp
-    radio.setSF(LORA_SPREADING_FACTOR);    // Set the spreading factor
+    Serial.begin(115200);               // Initialize serial communication with a baud rate of 115200
+    delay(5000);                        // Open the serial port within 5 seconds after uploading to view full print output
+    radio.init();                       // Initialize the LoRa node with a default bandwidth of 125 KHz
+    radio.setRxCB(loraRxDone);          // Set the receive complete callback function
+    radio.setTxCB(loraTxDone);          // Set the transmission complete callback function
+    radio.setFreq(RF_FREQUENCY);        // Set the communication frequency
+    radio.setEIRP(TX_EIRP);             // Set the Tx Eirp
+    radio.setSF(LORA_SPREADING_FACTOR); // Set the spreading factor
 }
 
 void loop()
 {
     delay(5000);
-    radio.sendData(buffer,sizeof(buffer));
+    radio.stopRx();
+    radio.sendData(buffer, sizeof(buffer));
     printf("send Counter=%d\n",(buffer[0]<<8)|buffer[1]);
 }

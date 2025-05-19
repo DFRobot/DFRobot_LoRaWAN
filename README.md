@@ -305,65 +305,71 @@ To use this library, first download the library file, paste it into the \Arduino
      * @param cb The callback
      * @return None
      */
-     void setRxTimeOutCB(rxTimeOutCB cb);
+    void setRxTimeOutCB(rxTimeOutCB cb);
 
-     /**
-      * @fn setRxErrorCB
-      * @brief Sets the callback function for when data reception encounters an error.
-      * @param cb The callback function.
-      * @return None
-      */
-     void setRxErrorCB(rxErrorCB cb);
+    /**
+     * @fn setRxErrorCB
+     * @brief Sets the callback function for when data reception encounters an error.
+     * @param cb The callback function.
+     * @return None
+     */
+    void setRxErrorCB(rxErrorCB cb);
 
-     /**
-      * @fn startRx
-      * @brief Starts receiving data using the LoRa radio module.
-      * @param timeout The timeout, in milliseconds.
-      * @return None
-      */
-     void startRx(uint32_t timeout);
+    /**
+     * @fn startRx
+     * @brief Starts receiving data using the LoRa radio module.
+     * @return None
+     */
+    void startRx();
 
-     /**
-      * @fn setCadCB
-      * @brief Sets the callback function for when channel activity detection is completed.
-      * @param cb The callback function.
-      * @return None
-      */
-     void setCadCB(cadDoneCB cb);
+    /**
+     * @fn stopRx
+     * @brief LoRa radio module stops receiving data.
+     * @return None
+     */
+    void stopRx();
 
-     /**
-      * @fn startCad
-      * @brief Starts channel activity detection using the LoRa radio module.
-      * @param cadSymbolNum the number of symbols to be used for channel activity detection operation.
-      * @param cadDetPeak Peak detection threshold, Signals above this threshold are considered definite channel activity.
-      * @param cadDetMin Minimum detection threshold, Signals between cadDetMin and cadDetPeak trigger potential activity.
-      * @return None
-      */
-     void startCad(RadioLoRaCadSymbols_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin);
+    /**
+     * @fn setCadCB
+     * @brief Sets the callback function for when channel activity detection is completed.
+     * @param cb The callback function.
+     * @return None
+     */
+    void setCadCB(cadDoneCB cb);
 
-     /**
-      * @fn deepSleepMs
-      * @brief Set the MCU to immediately enter sleep for a specified duration.
-      * @param timesleep Node sleep duration(ms).If set to 0, the device will never wake up.
-      * @return None
-      */
-     void deepSleepMs(uint32_t timesleep);
+    /**
+     * @fn startCad
+     * @brief Starts channel activity detection using the LoRa radio module.
+     * @param cadSymbolNum the number of symbols to be used for channel activity detection operation.
+     * @param cadDetPeak Peak detection threshold, Signals above this threshold are considered definite channel activity.
+     * @param cadDetMin Minimum detection threshold, Signals between cadDetMin and cadDetPeak trigger potential activity.
+     * @return None
+     */
+    void startCad(RadioLoRaCadSymbols_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin);
+
+    /**
+     * @fn deepSleepMs
+     * @brief Set the MCU to immediately enter sleep for a specified duration.
+     * @param timesleep Node sleep duration(ms).If set to 0, the device will never wake up.
+     * @return None
+     */
+    void deepSleepMs(uint32_t timesleep);
      
-     /**
-      * @fn setEncryptKey
-      * @brief Set the encryption key for the radio.
-      * @param key Pointer to the encryption key (unsigned 8-bit integer array).
-      * @return None
-      */
-     void setEncryptKey(const uint8_t *key);
+    /**
+     * @fn setEncryptKey
+     * @brief Set the encryption key for the radio.
+     * @param key Pointer to the encryption key (unsigned 8-bit integer array).
+     * @return None
+     */
+    void setEncryptKey(const uint8_t *key);
 
-     /**
-      * @fn dumpRegisters
-      * @brief Dump the registers of the radio.
-      * @n This function prints the current values of all the registers of the radio to the output (serial monitor)
-      * @return None
-      */
-     void dumpRegisters();
+    /**
+     * @fn dumpRegisters
+     * @brief Dump the registers of the radio.
+     * @n This function prints the current values of all the registers of the radio to the output (serial monitor)
+     * @return None
+     */
+    void dumpRegisters();
 ```
 
 ## Compatibility
@@ -378,7 +384,7 @@ To use this library, first download the library file, paste it into the \Arduino
 
 ## History
 
-- 2025/04/11 - Version 1.0.0 released.
+- 2025/05/15 - Version 0.9.1 released.
 
 ## Credits
 

@@ -1,8 +1,8 @@
 /*!
  *@file LoRaReliableReceive.ino
  *@brief LoRa reliable communication, receiver.
- *@details The node enters a 10-second receive mode. If it times out, it continues to enter the 10-second receive mode.
-           If a message is received, it performs the following checks, sends an ACK, and then re-enters the receive mode:
+ *@details The node enters receiving mode. If a message is received, it performs the following checks, 
+           sends an ACK confirmation, and then re-enters receiving mode.
  *@n If the current frame count differs from the previous frame count by more than 1, it indicates that the receiver has experienced data loss.
  *@n If the current frame count is less than the previous frame count, it suggests that the sender may have restarted.
  *@n If the current frame count is equal to the previous frame count, it indicates that the sender has lost the ACK.
@@ -50,29 +50,23 @@ void loraRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
     }else if(prevCount == currCount){
       printf("The host currCount data. Procedure\n The previous ack was lost\n");
     }
+    prevCount = currCount;
+    radio.stopRx();
     radio.sendData(buffer, sizeof(buffer));
     delay(1000);
-    prevCount = currCount;
-    radio.startRx(10 * 1000); // Start receiving and set the receive timeout to 10s
-}
-
-void loraRxTimeout(void)
-{
-    printf("OnRxTimeout\n");
-    radio.startRx(10 * 1000); // Start receiving and set the receive timeout to 10s
+    radio.startRx();                        // Start receiving    
 }
 
 void setup()
 {
-    Serial.begin(115200);   // Initialize serial communication with a baud rate of 115200
-    delay(5000);            // Open the serial port within 5 seconds after uploading to view full print output
-    radio.init();           // Initialize the LoRa node with a default bandwidth of 125 KHz
+    Serial.begin(115200);                   // Initialize serial communication with a baud rate of 115200
+    delay(5000);                            // Open the serial port within 5 seconds after uploading to view full print output
+    radio.init();                           // Initialize the LoRa node with a default bandwidth of 125 KHz
     
-    radio.setRxCB(loraRxDone);                  // Set the receive complete callback function
-    radio.setRxTimeOutCB(loraRxTimeout);        // Set the receive timeout callback function  
-    radio.setFreq(RF_FREQUENCY);                 // Set the communication frequency。
-    radio.setSF(LORA_SPREADING_FACTOR);  // Set the spreading factor
-    radio.startRx(10 * 1000);                         // Start receiving and set the receive timeout to 10s
+    radio.setRxCB(loraRxDone);              // Set the receive complete callback function
+    radio.setFreq(RF_FREQUENCY);            // Set the communication frequency
+    radio.setSF(LORA_SPREADING_FACTOR);     // Set the spreading factor
+    radio.startRx();                        // Start receiving
 }
 
 void loop()
