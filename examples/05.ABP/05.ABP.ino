@@ -33,7 +33,7 @@ uint8_t buffer[255];
 // Application port number
 uint8_t port = 2;
 
-//LorawanNode node(/*devAddr=*/nodeDevAddr, /*NwkSKey = */nodeNwsKey, /*AppSKey=*/nodeAppsKey, /*classType=*/CLASS_A);
+//LoRaWAN_Node node(/*devAddr=*/nodeDevAddr, /*NwkSKey = */nodeNwsKey, /*AppSKey=*/nodeAppsKey, /*classType=*/CLASS_A);
 LoRaWAN_Node node(/*devAddr=*/nodeDevAddr, /*NwkSKey = */nodeNwsKey, /*AppSKey=*/nodeAppsKey);
 TimerEvent_t appTimer;
 
